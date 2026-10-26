@@ -251,15 +251,23 @@
   }
 
   function renderSla(rows) {
+    const clientsByVolume = group(rows, row => row.client).map(client => {
+      const rated = client.rows.filter(row => row.sla === "Dentro prazo" || row.sla === "Fora prazo");
+      const within = rated.filter(row => row.sla === "Dentro prazo").length;
+      const sla = rated.length ? `${number.format(within / rated.length * 100)}% dentro do prazo` : "SLA indisponível";
+      return { ...client, note: `${integer.format(rated.length)} chamados com SLA · ${sla}` };
+    });
     const dimensions = [
-      ["Cliente", row => row.client],
-      ["Prioridade", row => row.priority],
-      ["Serviço", row => row.service],
-      ["Atendente", row => row.agent]
+      chartPanel("Chamados por cliente", "Quantidade total de chamados, do maior para o menor · SLA informado como detalhe.", countBars(clientsByVolume, 10)),
+      ...[
+        ["Prioridade", row => row.priority],
+        ["Serviço", row => row.service],
+        ["Atendente", row => row.agent]
+      ].map(([label, keyOf]) =>
+        chartPanel(`SLA por ${label.toLocaleLowerCase("pt-BR")}`, "Cumprimento (%) entre chamados com classificação de prazo; até 10 grupos.", slaRate(group(rows.filter(row => row.sla === "Dentro prazo" || row.sla === "Fora prazo"), keyOf), 10))
+      )
     ];
-    document.querySelector(viewTargets.sla).innerHTML = `<div class="wow-chart-grid">${dimensions.map(([label, keyOf]) =>
-      chartPanel(`SLA por ${label.toLocaleLowerCase("pt-BR")}`, "Cumprimento (%) entre chamados com classificação de prazo; até 10 grupos.", slaRate(group(rows.filter(row => row.sla === "Dentro prazo" || row.sla === "Fora prazo"), keyOf), 10))
-    ).join("")}</div>`;
+    document.querySelector(viewTargets.sla).innerHTML = `<div class="wow-chart-grid">${dimensions.join("")}</div>`;
   }
 
   function renderFinance(rows) {
