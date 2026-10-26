@@ -155,14 +155,14 @@
     return `<article class="panel"${id ? ` id="${escapeHtml(id)}"` : ""}><div class="panel-head"><div><h2 class="panel-title">${escapeHtml(title)}</h2><p class="panel-subtitle">${escapeHtml(subtitle)}</p></div></div>${content}</article>`;
   }
 
-  function bars(items, { format = "count", maxRows = 10, tone = "" } = {}) {
+  function bars(items, { format = "count", maxRows = 10, tone = "", displayFormat = format, sortByCount = false } = {}) {
     if (!items.length) return '<div class="wow-message">Sem dados para os filtros selecionados.</div>';
-    const visible = [...items].sort((a, b) => b.value - a.value).slice(0, maxRows);
+    const visible = [...items].sort((a, b) =>       (sortByCount ? b.count - a.count : b.value - a.value) || a.name.localeCompare(b.name, "pt-BR")     ).slice(0, maxRows);
     const maximum = Math.max(...visible.map(item => item.value), 1);
     return `<div class="wow-chart-list">${visible.map(item => {
       const width = Math.min(100, Math.max(1.5, item.value / maximum * 100));
       const detail = item.note ? `<span class="wow-chart-note">${escapeHtml(item.note)}</span>` : "";
-      return `<div class="wow-chart-row" title="${escapeHtml(`${item.name}: ${fmtValue(item.value, format)}`)}"><div class="wow-chart-row-head"><span class="wow-chart-name">${escapeHtml(item.name)}</span><span class="wow-chart-value">${fmtValue(item.value, format)}</span></div><div class="wow-chart-track"><div class="wow-chart-fill ${tone}" style="width:${width.toFixed(1)}%"></div></div>${detail}</div>`;
+      const displayValue = item.displayText ?? fmtValue(item.displayValue ?? item.value, displayFormat);       return `<div class="wow-chart-row" title="${escapeHtml(`${item.name}: ${displayValue}`)}"><div class="wow-chart-row-head"><span class="wow-chart-name">${escapeHtml(item.name)}</span><span class="wow-chart-value">${escapeHtml(displayValue)}</span></div><div class="wow-chart-track"><div class="wow-chart-fill ${tone}" style="width:${width.toFixed(1)}%"></div></div>${detail}</div>`;
     }).join("")}</div>`;
   }
 
@@ -189,14 +189,14 @@
     return countBars(group(rows, keyOf), maxRows);
   }
 
-  function slaRate(items, maxRows = 10) {
+  function slaRate(items, maxRows = 10, sortByCount = false) {
     const rated = items.map(item => {
       const valid = item.rows.filter(row => row.sla === "Dentro prazo" || row.sla === "Fora prazo");
       const onTime = valid.filter(row => row.sla === "Dentro prazo").length;
       const rate = valid.length ? onTime / valid.length * 100 : 0;
-      return { name: item.name, value: rate, note: `${integer.format(valid.length)} chamados com SLA · ${integer.format(onTime)} dentro do prazo` };
-    }).sort((a, b) => b.value - a.value);
-    return bars(rated, { format: "percent", maxRows, tone: "" });
+      return { name: item.name, count: item.count, value: rate, ratedCount: valid.length, note: `${integer.format(valid.length)} chamados com SLA · ${integer.format(onTime)} dentro do prazo` };
+    }).filter(item => item.ratedCount > 0);
+    return bars(rated, { format: "percent", maxRows, tone: "", sortByCount });
   }
 
   function slaSummary(rows) {
@@ -254,17 +254,17 @@
     const clientsByVolume = group(rows, row => row.client).map(client => {
       const rated = client.rows.filter(row => row.sla === "Dentro prazo" || row.sla === "Fora prazo");
       const within = rated.filter(row => row.sla === "Dentro prazo").length;
-      const sla = rated.length ? `${number.format(within / rated.length * 100)}% dentro do prazo` : "SLA indisponível";
-      return { ...client, note: `${integer.format(rated.length)} chamados com SLA · ${sla}` };
+      const rate = rated.length ? within / rated.length * 100 : null;
+      return { ...client, value: client.count, displayValue: rate ?? 0, displayText: rate == null ? "Sem SLA" : fmtValue(rate, "percent"), note: `${integer.format(rated.length)} chamados com SLA · ${rated.length ? `${fmtValue(rate, "percent")} dentro do prazo` : "sem classificação de SLA"}` };
     });
     const dimensions = [
-      chartPanel("Chamados por cliente", "Quantidade total de chamados, do maior para o menor · SLA informado como detalhe.", countBars(clientsByVolume, 10)),
+      chartPanel("SLA por cliente", "10 clientes com mais chamados, ordenados do maior para o menor; o indicador mostra a % de SLA.", bars(clientsByVolume, { format: "count", displayFormat: "percent", maxRows: 10 })),
       ...[
-        ["Prioridade", row => row.priority],
+        ["Prioridade", row => row.priority, true],
         ["Serviço", row => row.service],
         ["Atendente", row => row.agent]
-      ].map(([label, keyOf]) =>
-        chartPanel(`SLA por ${label.toLocaleLowerCase("pt-BR")}`, "Cumprimento (%) entre chamados com classificação de prazo; até 10 grupos.", slaRate(group(rows.filter(row => row.sla === "Dentro prazo" || row.sla === "Fora prazo"), keyOf), 10))
+      ].map(([label, keyOf, sortByCount = false]) =>
+        chartPanel(`SLA por ${label.toLocaleLowerCase("pt-BR")}`, "Cumprimento (%) entre chamados com classificação de prazo; até 10 grupos.", slaRate(group(sortByCount ? rows : rows.filter(row => row.sla === "Dentro prazo" || row.sla === "Fora prazo"), keyOf), 10, sortByCount))
       )
     ];
     document.querySelector(viewTargets.sla).innerHTML = `<div class="wow-chart-grid">${dimensions.join("")}</div>`;
