@@ -168,6 +168,7 @@
     .wow-chart-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 14px; }
     .wow-chart-grid .panel { overflow: hidden; }
     .wow-chart-list { display: grid; gap: 12px; padding: 10px 19px 20px; }
+    .wow-chart-list-scroll { max-height: 418px; overflow-y: auto; }
     .wow-chart-row { display: grid; gap: 6px; min-width: 0; }
     .wow-chart-row-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; color: #53645b; font-size: 11px; }
     .wow-chart-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -177,6 +178,9 @@
     .wow-chart-fill.late { background: var(--coral); }
     .wow-chart-fill.alt { background: #6184a0; }
     .wow-chart-note { color: #87938b; font-size: 10px; }
+    .ifood-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .ifood-chart-grid .ifood-trend-list { max-height: 420px; overflow-y: auto; }
+    .ifood-load-error { padding: 24px; color: #a43f35; font-size: 13px; }
     .wow-month-chart { display: grid; grid-template-columns: repeat(auto-fit, minmax(46px, 1fr)); align-items: end; gap: 7px; min-height: 190px; padding: 20px 18px 13px; }
     .wow-month-item { display: grid; grid-template-rows: 1fr auto; align-items: end; gap: 8px; height: 155px; min-width: 0; text-align: center; }
     .wow-month-track { display: flex; height: 125px; align-items: end; justify-content: center; border-bottom: 1px solid #dce1d8; }
@@ -194,6 +198,7 @@
     @media (max-width: 640px) {
       .wow-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .wow-chart-grid { grid-template-columns: minmax(0, 1fr); }
+      .ifood-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .wow-view-tabs { margin-right: -14px; }
       .wow-view-tab { padding-right: 10px; padding-left: 10px; }
     }
@@ -352,6 +357,7 @@
       <button class="dashboard-tab" id="tab-wow" type="button" role="tab" aria-selected="false" aria-controls="panel-wow" tabindex="-1">WOW SERVICE</button>
       <button class="dashboard-tab" id="tab-production" type="button" role="tab" aria-selected="false" aria-controls="panel-production" tabindex="-1">PRODUÇÃO 2026</button>
       <button class="dashboard-tab" id="tab-logistics" type="button" role="tab" aria-selected="false" aria-controls="panel-logistics" tabindex="-1">LOGISTICA</button>
+      <button class="dashboard-tab" id="tab-ifood" type="button" role="tab" aria-selected="false" aria-controls="panel-ifood" tabindex="-1">IFOOD</button>
     </nav>
 
     <section class="dashboard-panel" id="panel-compare" role="tabpanel" aria-labelledby="tab-compare">
@@ -543,7 +549,7 @@
       </section>
       <section class="kpis wow-kpis" id="wowKpis" aria-label="Indicadores executivos Wow Service" hidden></section>
       <nav class="wow-view-tabs" role="tablist" aria-label="Análises da operação Wow Service">
-        <button class="wow-view-tab" type="button" role="tab" aria-selected="true" aria-controls="wow-view-dre" data-wow-view="dre">VISÃO FINANCEIRA ORIGINAL</button>
+        <button class="wow-view-tab" type="button" role="tab" aria-selected="true" aria-controls="wow-view-dre" data-wow-view="dre">VISÃO FINANCEIRA WOW</button>
         <button class="wow-view-tab" type="button" role="tab" aria-selected="false" aria-controls="wow-view-executive" data-wow-view="executive" tabindex="-1">VISÃO EXECUTIVA</button>
         <button class="wow-view-tab" type="button" role="tab" aria-selected="false" aria-controls="wow-view-sla" data-wow-view="sla" tabindex="-1">SLA E PERFORMANCE</button>
         <button class="wow-view-tab" type="button" role="tab" aria-selected="false" aria-controls="wow-view-finance" data-wow-view="finance" tabindex="-1">GESTÃO FINANCEIRA</button>
@@ -625,10 +631,22 @@
       <footer><span id="logisticsDataStatus" role="status">Aguardando carregamento da logística.</span><span>Fonte: ENVIOS 2026 · Taxas calculadas sobre entregas com indicador preenchido.</span></footer>
     </section>
 
+    <section class="dashboard-panel" id="panel-ifood" role="tabpanel" aria-labelledby="tab-ifood" hidden>
+      <section class="filters ifood-filters" aria-label="Filtros da operação IFOOD">
+        <div class="filter"><label for="ifoodYearFilter">Ano de entrada</label><select id="ifoodYearFilter"><option value="all">Todos os anos</option></select></div>
+        <div class="filter"><label for="ifoodBrandFilter">Marca</label><select id="ifoodBrandFilter"><option value="all">Todas as marcas</option></select></div>
+        <p class="period-note" id="ifoodPeriodNote" aria-live="polite">Carregando dados da planilha IFOOD...</p>
+      </section>
+      <section class="kpis wow-kpis ifood-kpis" id="ifoodKpis" aria-label="Indicadores da operação IFOOD"></section>
+      <div class="wow-chart-grid ifood-chart-grid" id="ifoodCharts"></div>
+      <footer><span>Fonte: Controle de Produção Ifood · Base contratual</span><span id="ifoodDataStatus" role="status">Aguardando dados da planilha.</span></footer>
+    </section>
+
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script type="module" src="./wow-dashboard.js"></script>
+  <script type="module" src="./ifood-dashboard.js"></script>
   <script>
     const MONTHS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
     const MONTH_KEYS = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
@@ -653,6 +671,7 @@
     const WOW_SHEET_URL = "https://docs.google.com/spreadsheets/d/1RGu5x3CXuAHpUF5fzdOy-njK6GWsDPW2gzmhjp-4No4/export?format=csv&gid=803779247";
     const WOW_SHEET_PAGE_URL = "https://docs.google.com/spreadsheets/d/1RGu5x3CXuAHpUF5fzdOy-njK6GWsDPW2gzmhjp-4No4/edit?gid=803779247#gid=803779247";
     const WOW_CALLS_SHEET_PAGE_URL = "https://docs.google.com/spreadsheets/d/1RGu5x3CXuAHpUF5fzdOy-njK6GWsDPW2gzmhjp-4No4/edit?gid=1184166301#gid=1184166301";
+    const IFOOD_SHEET_PAGE_URL = "https://docs.google.com/spreadsheets/d/1M2VJ62UeSu4UHrqBj9PSUKx4FrcVELnfG5QUCSCAAiw/edit?gid=0#gid=0";
     const PRODUCTION_SHEET_URL = "https://docs.google.com/spreadsheets/d/16NQQowdDZ3SI-uV7ICA-bevMrgHT4u3Auwnr5eUcePg/export?format=csv&gid=435516244";
     const PRODUCTION_SHEET_PAGE_URL = "https://docs.google.com/spreadsheets/d/16NQQowdDZ3SI-uV7ICA-bevMrgHT4u3Auwnr5eUcePg/edit?gid=435516244#gid=435516244";
     const FULL_MONTHS = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
@@ -1895,6 +1914,14 @@
           source: LOGISTICS_SHEET_PAGE_URL,
           sourceLabel: "Abrir planilha de logística ↗",
           pageTitle: "LOGISTICA"
+        },
+        ifood: {
+          eyebrow: "Operação · produção e entrega",
+          title: "IFOOD",
+          copy: "Totens, marcas, SLA e prazos de entrega da operação.",
+          source: IFOOD_SHEET_PAGE_URL,
+          sourceLabel: "Abrir planilha IFOOD ↗",
+          pageTitle: "IFOOD"
         }
       };
       const selectedDashboard = dashboards[dashboard];
@@ -1922,7 +1949,11 @@
           compare: refreshFromSheet,
           wow: refreshWowFromSheet,
           production: refreshProductionFromSheet,
-          logistics: refreshLogisticsFromSheet
+          logistics: refreshLogisticsFromSheet,
+          ifood: () => {
+            if (typeof window.refreshIfoodDashboard !== "function") throw new Error("O painel IFOOD ainda está iniciando.");
+            return window.refreshIfoodDashboard();
+          }
         }[activeDashboard];
         await refresh();
       } finally {
@@ -1975,10 +2006,11 @@
     document.querySelector("#tab-wow").addEventListener("click", () => switchDashboard("wow"));
     document.querySelector("#tab-production").addEventListener("click", () => switchDashboard("production"));
     document.querySelector("#tab-logistics").addEventListener("click", () => switchDashboard("logistics"));
+    document.querySelector("#tab-ifood").addEventListener("click", () => switchDashboard("ifood"));
     document.querySelector(".dashboard-tabs").addEventListener("keydown", event => {
       if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
       event.preventDefault();
-      const dashboards = ["compare", "wow", "production", "logistics"];
+      const dashboards = ["compare", "wow", "production", "logistics", "ifood"];
       const currentIndex = dashboards.indexOf(activeDashboard);
       const nextIndex = event.key === "Home" ? 0
         : event.key === "End" ? dashboards.length - 1

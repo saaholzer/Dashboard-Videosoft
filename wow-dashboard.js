@@ -155,14 +155,17 @@
     return `<article class="panel"${id ? ` id="${escapeHtml(id)}"` : ""}><div class="panel-head"><div><h2 class="panel-title">${escapeHtml(title)}</h2><p class="panel-subtitle">${escapeHtml(subtitle)}</p></div></div>${content}</article>`;
   }
 
-  function bars(items, { format = "count", maxRows = 10, tone = "", displayFormat = format, sortByCount = false } = {}) {
+  function bars(items, { format = "count", maxRows = 10, tone = "", displayFormat = format, sortByCount = false, scrollable = false } = {}) {
     if (!items.length) return '<div class="wow-message">Sem dados para os filtros selecionados.</div>';
-    const visible = [...items].sort((a, b) =>       (sortByCount ? b.count - a.count : b.value - a.value) || a.name.localeCompare(b.name, "pt-BR")     ).slice(0, maxRows);
+    const visible = [...items].sort((a, b) =>
+      (sortByCount ? b.count - a.count : b.value - a.value) || a.name.localeCompare(b.name, "pt-BR")
+    ).slice(0, maxRows);
     const maximum = Math.max(...visible.map(item => item.value), 1);
-    return `<div class="wow-chart-list">${visible.map(item => {
+    return `<div class="wow-chart-list${scrollable ? " wow-chart-list-scroll" : ""}">${visible.map(item => {
       const width = Math.min(100, Math.max(1.5, item.value / maximum * 100));
       const detail = item.note ? `<span class="wow-chart-note">${escapeHtml(item.note)}</span>` : "";
-      const displayValue = item.displayText ?? fmtValue(item.displayValue ?? item.value, displayFormat);       return `<div class="wow-chart-row" title="${escapeHtml(`${item.name}: ${displayValue}`)}"><div class="wow-chart-row-head"><span class="wow-chart-name">${escapeHtml(item.name)}</span><span class="wow-chart-value">${escapeHtml(displayValue)}</span></div><div class="wow-chart-track"><div class="wow-chart-fill ${tone}" style="width:${width.toFixed(1)}%"></div></div>${detail}</div>`;
+      const displayValue = item.displayText ?? fmtValue(item.displayValue ?? item.value, displayFormat);
+      return `<div class="wow-chart-row" title="${escapeHtml(`${item.name}: ${displayValue}`)}"><div class="wow-chart-row-head"><span class="wow-chart-name">${escapeHtml(item.name)}</span><span class="wow-chart-value">${escapeHtml(displayValue)}</span></div><div class="wow-chart-track"><div class="wow-chart-fill ${tone}" style="width:${width.toFixed(1)}%"></div></div>${detail}</div>`;
     }).join("")}</div>`;
   }
 
@@ -185,8 +188,8 @@
     }).join("")}</div>`;
   }
 
-  function groupedCount(rows, keyOf, maxRows = 10) {
-    return countBars(group(rows, keyOf), maxRows);
+  function groupedCount(rows, keyOf, maxRows = 10, options = {}) {
+    return bars(group(rows, keyOf).map(item => ({ name: item.name, value: item.count, note: item.note })), { maxRows, ...options });
   }
 
   function slaRate(items, maxRows = 10, sortByCount = false) {
@@ -251,21 +254,31 @@
   }
 
   function renderSla(rows) {
-    const clientsByVolume = group(rows, row => row.client).map(client => {
-      const rated = client.rows.filter(row => row.sla === "Dentro prazo" || row.sla === "Fora prazo");
-      const within = rated.filter(row => row.sla === "Dentro prazo").length;
-      const rate = rated.length ? within / rated.length * 100 : null;
-      return { ...client, value: client.count, displayValue: rate ?? 0, displayText: rate == null ? "Sem SLA" : fmtValue(rate, "percent"), note: `${integer.format(rated.length)} chamados com SLA · ${rated.length ? `${fmtValue(rate, "percent")} dentro do prazo` : "sem classificação de SLA"}` };
-    });
+    const clientsByVolume = group(rows, row => row.client)
+      .map(client => {
+        const rated = client.rows.filter(row => row.sla === "Dentro prazo" || row.sla === "Fora prazo");
+        const within = rated.filter(row => row.sla === "Dentro prazo").length;
+        const rate = rated.length ? within / rated.length * 100 : null;
+        return {
+          name: client.name,
+          value: client.count,
+          displayValue: rate ?? 0,
+          displayText: rate == null ? "Sem SLA" : fmtValue(rate, "percent"),
+          note: `${integer.format(rated.length)} chamados com SLA · ${rated.length ? `${fmtValue(rate, "percent")} dentro do prazo` : "sem classificação de SLA"}`
+        };
+      })
+      .sort((a, b) => b.value - a.value || a.name.localeCompare(b.name, "pt-BR"))
+      .slice(0, 10);
     const dimensions = [
       chartPanel("SLA por cliente", "10 clientes com mais chamados, ordenados do maior para o menor; o indicador mostra a % de SLA.", bars(clientsByVolume, { format: "count", displayFormat: "percent", maxRows: 10 })),
       ...[
-        ["Prioridade", row => row.priority, true],
-        ["Serviço", row => row.service, true],
-        ["Atendente", row => row.agent, true]
-      ].map(([label, keyOf, sortByCount = false]) =>
-        chartPanel(`SLA por ${label.toLocaleLowerCase("pt-BR")}`, "Cumprimento (%) entre chamados com classificação de prazo; até 10 grupos.", slaRate(group(sortByCount ? rows : rows.filter(row => row.sla === "Dentro prazo" || row.sla === "Fora prazo"), keyOf), 10, sortByCount))
-      )
+        { label: "Prioridade", keyOf: row => row.priority, sortByCount: true },
+        { label: "Serviço", keyOf: row => row.service, sortByCount: true },
+        { label: "Atendente", keyOf: row => row.agent, sortByCount: true }
+      ].map(({ label, keyOf, sortByCount = false }) => {
+        const chartRows = sortByCount ? rows : rows.filter(row => row.sla === "Dentro prazo" || row.sla === "Fora prazo");
+        return chartPanel(`SLA por ${label.toLocaleLowerCase("pt-BR")}`, "Cumprimento (%) entre chamados com classificação de prazo; até 10 grupos.", slaRate(group(chartRows, keyOf), 10, sortByCount));
+      })
     ];
     document.querySelector(viewTargets.sla).innerHTML = `<div class="wow-chart-grid">${dimensions.join("")}</div>`;
   }
@@ -333,12 +346,26 @@
       ["Clientes", row => row.client],
       ["Filiais", row => row.branch],
       ["Modelos de equipamento", row => row.model],
-      ["Componentes", row => { const component = normalizedText(row.component); return component.includes("nao se aplica") || component === "nao informado" || component === "fora de linha" ? "" : row.component; }],
-      ["Estados (UF)", row => row.state],
-      ["Cidades", row => row.city]
+      ["Componentes", row => row.component, rows => rows.filter(row => {
+        const component = normalizedText(row.component);
+        return !component.includes("nao se aplica") && component !== "nao informado" && component !== "fora de linha";
+      })],
+      ["Estados (UF)", row => row.state, rows => rows.filter(row => {
+        const state = normalizedText(row.state);
+        return state !== "nao informado" && state !== "nao informada";
+      })],
+      ["Cidades", row => row.city, rows => rows.filter(row => {
+        const city = normalizedText(row.city);
+        return city !== "nao informado" && city !== "nao informada";
+      })]
     ];
-    document.querySelector(viewTargets.assets).innerHTML = `<div class="wow-chart-grid">${dimensions.map(([title, keyOf]) =>
-      chartPanel(`Chamados por ${title.toLocaleLowerCase("pt-BR")}`, "Distribuição dos chamados no recorte selecionado.", groupedCount(rows, keyOf, 10))
+    document.querySelector(viewTargets.assets).innerHTML = `<div class="wow-chart-grid">${dimensions.map(([title, keyOf, selectRows]) => {
+      const chartRows = selectRows ? selectRows(rows) : rows;
+      const isStateChart = title === "Estados (UF)";
+      const isCityChart = title === "Cidades";
+      const maxRows = isStateChart ? Infinity : isCityChart ? 50 : 10;
+      return chartPanel(`Chamados por ${title.toLocaleLowerCase("pt-BR")}`, "Distribuição dos chamados no recorte selecionado.", groupedCount(chartRows, keyOf, maxRows, { scrollable: isStateChart || isCityChart }));
+    }
     ).join("")}</div>`;
   }
 
