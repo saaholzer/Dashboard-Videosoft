@@ -261,8 +261,8 @@
       chartPanel("SLA por cliente", "10 clientes com mais chamados, ordenados do maior para o menor; o indicador mostra a % de SLA.", bars(clientsByVolume, { format: "count", displayFormat: "percent", maxRows: 10 })),
       ...[
         ["Prioridade", row => row.priority, true],
-        ["Serviço", row => row.service],
-        ["Atendente", row => row.agent]
+        ["Serviço", row => row.service, true],
+        ["Atendente", row => row.agent, true]
       ].map(([label, keyOf, sortByCount = false]) =>
         chartPanel(`SLA por ${label.toLocaleLowerCase("pt-BR")}`, "Cumprimento (%) entre chamados com classificação de prazo; até 10 grupos.", slaRate(group(sortByCount ? rows : rows.filter(row => row.sla === "Dentro prazo" || row.sla === "Fora prazo"), keyOf), 10, sortByCount))
       )
