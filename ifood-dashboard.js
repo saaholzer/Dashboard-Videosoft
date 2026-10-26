@@ -35,9 +35,13 @@
     return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
   }
 
+  function isSpreadsheetError(value) {
+    return /^#(?:REF!|N\/A|VALUE!)/i.test(normalize(value));
+  }
+
   function parseCancelledQuantity(value, quantity) {
     const text = normalize(value);
-    if (!text || /^#(?:REF!|N\/A|VALUE!)/i.test(text)) return 0;
+    if (!text || isSpreadsheetError(text)) return 0;
     const entries = text.split(/[,;\r\n]+/).map(entry => entry.trim()).filter(entry => entry && !entry.startsWith("#"));
     if (!entries.length) return 0;
     if (entries.length === 1 && /^(?:sim|yes|true|cancelado|cancelada)$/i.test(entries[0])) return quantity;
@@ -57,6 +61,7 @@
       status: normalize(row["Status do totem"]) || "Não informado",
       activationStatus: normalizeKey(row["Totem Ativo / Não Ativo"]),
       cancelledQuantity: parseCancelledQuantity(row.Cancelados, quantity),
+      cancellationDataError: isSpreadsheetError(row.Cancelados),
       brand: normalize(row.Marcas) || "Não informado",
       sla: normalize(row["Atendimento SLA Videosoft"]),
       recommissionedSerials: serials.filter(serial => /^R/i.test(serial))
@@ -89,17 +94,34 @@
 
   function operationalStatusQuantities(rows) {
     const totals = { "Totens ativos": 0, "Totens inativos": 0, "Totens cancelados": 0 };
+    let activationClassifiedQuantity = 0;
+    let unclassifiedQuantity = 0;
+    let cancellationErrorRows = 0;
     for (const row of rows) {
       const cancelled = row.cancelledQuantity;
       const remaining = Math.max(0, row.quantity - cancelled);
       totals["Totens cancelados"] += cancelled;
+      if (row.cancellationDataError) cancellationErrorRows += 1;
       if (["ativo", "ativa", "ativos", "ativas", "sim"].includes(row.activationStatus)) {
         totals["Totens ativos"] += remaining;
+        activationClassifiedQuantity += remaining;
       } else if (["nao ativo", "nao ativa", "nao ativos", "nao ativas", "inativo", "inativa", "inativos", "inativas", "nao", "0", "false"].includes(row.activationStatus)) {
         totals["Totens inativos"] += remaining;
+        activationClassifiedQuantity += remaining;
+      } else {
+        unclassifiedQuantity += remaining;
       }
     }
-    return Object.entries(totals).map(([name, value]) => ({ name, value })).filter(item => item.value > 0);
+    const activationDisplay = value => activationClassifiedQuantity ? integer.format(value) : "—";
+    const cancellationDisplay = cancellationErrorRows
+      ? totals["Totens cancelados"] ? `≥ ${integer.format(totals["Totens cancelados"])}` : "Incompleto"
+      : integer.format(totals["Totens cancelados"]);
+    const items = [
+      { name: "Totens ativos", value: totals["Totens ativos"], display: activationDisplay(totals["Totens ativos"]) },
+      { name: "Totens inativos", value: totals["Totens inativos"], display: activationDisplay(totals["Totens inativos"]) },
+      { name: "Totens cancelados", value: totals["Totens cancelados"], display: cancellationDisplay }
+    ];
+    return { items, unclassifiedQuantity, cancellationErrorRows };
   }
 
   function chartPanel(title, subtitle, items, { format = "count", scrollable = false, order = "value", emptyMessage = "Sem dados para os filtros selecionados." } = {}) {
@@ -205,12 +227,26 @@
     const recomRows = serialCount
       ? [{ name: "Seriais iniciados com R", value: serialCount, note: "Quantidade de seriais identificados como recomissionados" }]
       : [];
+    const operationalStatus = operationalStatusQuantities(rows);
+    const operationalStatusNotes = [];
+    if (operationalStatus.unclassifiedQuantity) {
+      const unclassified = operationalStatus.unclassifiedQuantity;
+      operationalStatusNotes.push(`${integer.format(unclassified)} ${unclassified === 1 ? "totem sem" : "totens sem"} situação ativa/inativa informada`);
+    }
+    if (operationalStatus.cancellationErrorRows) {
+      const errors = operationalStatus.cancellationErrorRows;
+      operationalStatusNotes.push(`${integer.format(errors)} ${errors === 1 ? "registro com erro" : "registros com erro"} nas células de cancelamento`);
+    }
+    const operationalStatusSubtitle = [
+      "Ativos e inativos pela coluna “Totem Ativo / Não Ativo”; cancelados pelos seriais na coluna “Cancelados”.",
+      ...operationalStatusNotes
+    ].join(" ");
     document.querySelector("#ifoodCharts").innerHTML = [
       monthQuantityChart(rows),
       annualQuantityChart(rows),
       chartPanel("Totens por modelo", "Soma da quantidade por modelo de totem.", groupedQuantities(rows, row => row.model), { scrollable: true }),
       chartPanel("Totens por status", "Soma da quantidade por status do totem.", groupedQuantities(rows, row => row.status)),
-      chartPanel("Visão de totens ativos, inativos e cancelados", "Ativos e inativos pela coluna “Totem Ativo / Não Ativo”; cancelados pelos seriais na coluna “Cancelados”.", operationalStatusQuantities(rows), { emptyMessage: "A planilha ainda não informa esses status no recorte selecionado." }),
+      chartPanel("Visão de totens ativos, inativos e cancelados", operationalStatusSubtitle, operationalStatus.items, { order: "chronological" }),
       slaMonthlyChart(rows),
       chartPanel("Totens recomissionados", "Seriais cujo valor começa com a letra R, conforme solicitado.", recomRows),
       deliveryLeadTimeChart(rows),
