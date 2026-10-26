@@ -333,7 +333,7 @@
       ["Clientes", row => row.client],
       ["Filiais", row => row.branch],
       ["Modelos de equipamento", row => row.model],
-      ["Componentes", row => row.component],
+      ["Componentes", row => { const component = normalizedText(row.component); return component.includes("nao se aplica") || component === "nao informado" || component === "fora de linha" ? "" : row.component; }],
       ["Estados (UF)", row => row.state],
       ["Cidades", row => row.city]
     ];
