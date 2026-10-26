@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#153b32">
-  <title>COMPARATIVO FINANCEIRO</title>
+  <title>Dashboards Videosoft</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
@@ -52,8 +52,8 @@
     .refresh-button:disabled { cursor: wait; opacity: .65; }
 
     main { padding: 22px 24px 42px; }
-    .dashboard-tabs { display: flex; gap: 8px; margin-bottom: 21px; border-bottom: 1px solid #dce1d8; }
-    .dashboard-tab { padding: 11px 16px; border: 0; border-bottom: 3px solid transparent; color: #68776e; background: transparent; cursor: pointer; font-size: 13px; font-weight: 700; }
+    .dashboard-tabs { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 21px; border-bottom: 1px solid #dce1d8; }
+    .dashboard-tab { flex: none; padding: 11px 16px; border: 0; border-bottom: 3px solid transparent; color: #68776e; background: transparent; cursor: pointer; font-size: 13px; font-weight: 700; white-space: nowrap; }
     .dashboard-tab[aria-selected="true"] { border-bottom-color: var(--lime); color: var(--forest); }
     .dashboard-tab:focus-visible, .refresh-button:focus-visible { outline: 3px solid #9ccd50; outline-offset: 2px; }
     .dashboard-panel[hidden] { display: none; }
@@ -149,6 +149,7 @@
     .status-note { display: flex; align-items: center; gap: 8px; margin: 13px 0 0; color: #7d8982; font-size: 10px; }
     .status-note::before { width: 6px; height: 6px; border-radius: 50%; background: var(--year26); content: ""; }
     .wow-filters { display: flex; align-items: end; padding-bottom: 17px; }
+    .wow-filters[hidden], .wow-kpis[hidden] { display: none; }
     .wow-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr); align-items: start; gap: 14px; margin-top: 14px; }
     .wow-category-column { display: grid; align-content: start; gap: 14px; min-width: 0; }
     .wow-table { margin-top: 14px; overflow: hidden; }
@@ -157,6 +158,45 @@
     .wow-table table { min-width: 360px; }
     .wow-message { min-height: 250px; padding: 28px; color: #829087; font-size: 13px; text-align: center; }
     .wow-total-row td { border-top: 1px solid #dfe5dc; color: var(--ink); font-weight: 700; }
+    .wow-view-tabs { display: flex; gap: 6px; overflow-x: auto; margin: 0 0 16px; border-bottom: 1px solid #dce1d8; }
+    .wow-view-tab { flex: none; padding: 11px 13px; border: 0; border-bottom: 3px solid transparent; color: #68776e; background: transparent; cursor: pointer; font-size: 11px; font-weight: 700; }
+    .wow-view-tab[aria-selected="true"] { border-bottom-color: var(--lime); color: var(--forest); }
+    .wow-view-tab:focus-visible { outline: 3px solid #9ccd50; outline-offset: -2px; }
+    .wow-view[hidden] { display: none; }
+    .wow-kpis { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .wow-kpi .kpi-value { font-size: clamp(18px, 1.8vw, 25px); }
+    .wow-chart-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 14px; }
+    .wow-chart-grid .panel { overflow: hidden; }
+    .wow-chart-list { display: grid; gap: 12px; padding: 10px 19px 20px; }
+    .wow-chart-row { display: grid; gap: 6px; min-width: 0; }
+    .wow-chart-row-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; color: #53645b; font-size: 11px; }
+    .wow-chart-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .wow-chart-value { flex: none; color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; }
+    .wow-chart-track { height: 8px; overflow: hidden; border-radius: 6px; background: #edf0eb; }
+    .wow-chart-fill { height: 100%; min-width: 2px; border-radius: inherit; background: var(--forest-2); }
+    .wow-chart-fill.late { background: var(--coral); }
+    .wow-chart-fill.alt { background: #6184a0; }
+    .wow-chart-note { color: #87938b; font-size: 10px; }
+    .wow-month-chart { display: grid; grid-template-columns: repeat(auto-fit, minmax(46px, 1fr)); align-items: end; gap: 7px; min-height: 190px; padding: 20px 18px 13px; }
+    .wow-month-item { display: grid; grid-template-rows: 1fr auto; align-items: end; gap: 8px; height: 155px; min-width: 0; text-align: center; }
+    .wow-month-track { display: flex; height: 125px; align-items: end; justify-content: center; border-bottom: 1px solid #dce1d8; }
+    .wow-month-bar { width: min(28px, 70%); min-height: 2px; border-radius: 3px 3px 0 0; background: #25876b; }
+    .wow-month-label { color: #718078; font-size: 9px; white-space: nowrap; }
+    .wow-month-value { color: #53645b; font-size: 9px; font-weight: 600; }
+    .wow-callout { margin: 0 19px 18px; padding: 12px 14px; border-left: 3px solid var(--gold); background: #f7f6ef; color: #65736b; font-size: 11px; line-height: 1.5; }
+    .wow-filter-actions { align-self: end; min-height: 40px; padding: 0 12px; border: 1px solid #d6ddd4; border-radius: 3px; color: var(--forest); background: #fffefa; cursor: pointer; font-size: 12px; font-weight: 600; }
+    .wow-filter-actions:hover { background: #f1f5e9; }
+    .wow-load-error { padding: 24px; color: #a43f35; font-size: 13px; }
+    .wow-data-link { flex: none; }
+    @media (max-width: 900px) {
+      .wow-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @media (max-width: 640px) {
+      .wow-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .wow-chart-grid { grid-template-columns: minmax(0, 1fr); }
+      .wow-view-tabs { margin-right: -14px; }
+      .wow-view-tab { padding-right: 10px; padding-left: 10px; }
+    }
     .production-filters { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
     .production-filters .filter { min-width: 0; }
     .production-filters select, .production-filters input { width: 100%; }
@@ -228,8 +268,9 @@
       .masthead-actions { flex-wrap: wrap; gap: 12px; }
       h1 { font-size: 31px; }
       main { padding: 17px 14px 30px; }
-      .filters { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
       .filter { min-width: 0; }
+      .filter select, .filter input { width: 100%; min-width: 0; }
       .filter:last-of-type { grid-column: 1 / -1; }
       .period-note { grid-column: 1 / -1; margin: 0; }
       .kpis { gap: 8px; padding: 14px 0 17px; }
@@ -291,7 +332,7 @@
 <body>
   <header class="masthead">
     <div class="masthead-inner">
-      <p class="eyebrow">Painel executivo · desempenho comercial</p>
+      <p class="eyebrow" id="dashboardEyebrow">Painel executivo · desempenho comercial</p>
       <div class="masthead-row">
         <div>
           <h1 id="dashboardTitle">2025 <span style="color:var(--lime)">x</span> 2026</h1>
@@ -492,47 +533,66 @@
     </section>
 
     <section class="dashboard-panel" id="panel-wow" role="tabpanel" aria-labelledby="tab-wow" hidden>
-      <section class="filters wow-filters" aria-label="Filtros Wow Service">
-        <div class="filter">
-          <label for="wowMonthFilter">Mês</label>
-          <select id="wowMonthFilter">
+      <section class="filters wow-filters" id="wowOperationsFilters" aria-label="Filtros da operação Wow Service" hidden>
+        <div class="filter"><label for="wowYearFilter">Ano de abertura</label><select id="wowYearFilter"><option value="all">Todos os anos</option></select></div>
+        <div class="filter"><label for="wowMonthFilter">Mês de abertura</label><select id="wowMonthFilter"><option value="all">Todos os meses</option></select></div>
+        <div class="filter"><label for="wowServiceFilter">Serviço</label><select id="wowServiceFilter"><option value="all">Todos os serviços</option></select></div>
+        <div class="filter"><label for="wowAgentFilter">Atendente</label><select id="wowAgentFilter"><option value="all">Todos os atendentes</option></select></div>
+        <button class="wow-filter-actions" id="wowClearFilters" type="button">Limpar filtros</button>
+        <p class="period-note" id="wowPeriodNote" aria-live="polite">Carregando chamados...</p>
+      </section>
+      <section class="kpis wow-kpis" id="wowKpis" aria-label="Indicadores executivos Wow Service" hidden></section>
+      <nav class="wow-view-tabs" role="tablist" aria-label="Análises da operação Wow Service">
+        <button class="wow-view-tab" type="button" role="tab" aria-selected="true" aria-controls="wow-view-dre" data-wow-view="dre">VISÃO FINANCEIRA ORIGINAL</button>
+        <button class="wow-view-tab" type="button" role="tab" aria-selected="false" aria-controls="wow-view-executive" data-wow-view="executive" tabindex="-1">VISÃO EXECUTIVA</button>
+        <button class="wow-view-tab" type="button" role="tab" aria-selected="false" aria-controls="wow-view-sla" data-wow-view="sla" tabindex="-1">SLA E PERFORMANCE</button>
+        <button class="wow-view-tab" type="button" role="tab" aria-selected="false" aria-controls="wow-view-finance" data-wow-view="finance" tabindex="-1">GESTÃO FINANCEIRA</button>
+        <button class="wow-view-tab" type="button" role="tab" aria-selected="false" aria-controls="wow-view-quality" data-wow-view="quality" tabindex="-1">QUALIDADE E REINCIDÊNCIA</button>
+        <button class="wow-view-tab" type="button" role="tab" aria-selected="false" aria-controls="wow-view-team" data-wow-view="team" tabindex="-1">EQUIPE E PRODUTIVIDADE</button>
+        <button class="wow-view-tab" type="button" role="tab" aria-selected="false" aria-controls="wow-view-assets" data-wow-view="assets" tabindex="-1">CLIENTES E EQUIPAMENTOS</button>
+      </nav>
+      <section class="wow-view" id="wow-view-dre" role="tabpanel" aria-label="Visão financeira original">
+        <div class="filters wow-filters" id="wowDreFilters" aria-label="Filtros financeiros Wow Service">
+          <div class="filter"><label for="wowDreMonthFilter">Mês financeiro</label><select id="wowDreMonthFilter">
             <option value="all">Todos os meses</option>
             <option value="0">Janeiro</option><option value="1">Fevereiro</option><option value="2">Março</option>
             <option value="3">Abril</option><option value="4">Maio</option><option value="5">Junho</option>
             <option value="6">Julho</option><option value="7">Agosto</option><option value="8">Setembro</option>
             <option value="9">Outubro</option><option value="10">Novembro</option><option value="11">Dezembro</option>
-          </select>
+          </select></div>
+          <a class="source-link wow-data-link" href="https://docs.google.com/spreadsheets/d/1RGu5x3CXuAHpUF5fzdOy-njK6GWsDPW2gzmhjp-4No4/edit?gid=803779247#gid=803779247" target="_blank" rel="noreferrer">Abrir planilha financeira ↗</a>
         </div>
-      </section>
-
-      <section class="kpis" aria-label="Indicadores Wow Service">
-        <article class="kpi"><p class="kpi-label"><span class="kpi-dot"></span>Receita no período</p><p class="kpi-value" id="wowRevenue">—</p><p class="kpi-foot" id="wowRevenueFoot">Meses disponíveis</p></article>
-        <article class="kpi"><p class="kpi-label"><span class="kpi-dot"></span>Despesas no período</p><p class="kpi-value" id="wowExpenses">—</p><p class="kpi-foot" id="wowExpensesFoot">Meses disponíveis</p></article>
-        <article class="kpi"><p class="kpi-label"><span class="kpi-dot"></span>Lucro operacional</p><p class="kpi-value" id="wowProfit">—</p><p class="kpi-foot" id="wowProfitFoot">Receita menos despesas</p></article>
-        <article class="kpi"><p class="kpi-label"><span class="kpi-dot"></span>Margem operacional</p><p class="kpi-value" id="wowMargin">—</p><p class="kpi-foot" id="wowMarginFoot">Lucro sobre receita</p></article>
-      </section>
-
-      <section class="wow-grid">
-        <div class="wow-category-column">
-          <article class="panel wow-table">
-            <div class="panel-head"><div><h2 class="panel-title">Receitas por categoria</h2><p class="panel-subtitle" id="wowRevenueSubtitle">Valores da aba DRE WOW - AGRUPADO</p></div></div>
-            <div class="table-scroll" id="wowRevenueTable"></div>
+        <section class="kpis" aria-label="Indicadores financeiros Wow Service">
+          <article class="kpi"><p class="kpi-label"><span class="kpi-dot"></span>Receita no período</p><p class="kpi-value" id="wowRevenue">—</p><p class="kpi-foot" id="wowRevenueFoot">Meses disponíveis</p></article>
+          <article class="kpi"><p class="kpi-label"><span class="kpi-dot"></span>Despesas no período</p><p class="kpi-value" id="wowExpenses">—</p><p class="kpi-foot" id="wowExpensesFoot">Meses disponíveis</p></article>
+          <article class="kpi"><p class="kpi-label"><span class="kpi-dot"></span>Lucro operacional</p><p class="kpi-value" id="wowProfit">—</p><p class="kpi-foot" id="wowProfitFoot">Receita menos despesas</p></article>
+          <article class="kpi"><p class="kpi-label"><span class="kpi-dot"></span>Margem operacional</p><p class="kpi-value" id="wowMargin">—</p><p class="kpi-foot" id="wowMarginFoot">Lucro sobre receita</p></article>
+        </section>
+        <section class="wow-grid">
+          <div class="wow-category-column">
+            <article class="panel wow-table">
+              <div class="panel-head"><div><h2 class="panel-title">Receitas por categoria</h2><p class="panel-subtitle" id="wowRevenueSubtitle">Valores da aba DRE WOW - AGRUPADO</p></div></div>
+              <div class="table-scroll" id="wowRevenueTable"></div>
+            </article>
+            <article class="panel wow-table">
+              <div class="panel-head"><div><h2 class="panel-title">Totens com Garantia Onsite (G.O.)</h2><p class="panel-subtitle">Quantidade de totens e rateio por totem</p></div></div>
+              <div class="table-scroll" id="wowTotemTable"></div>
+            </article>
+          </div>
+          <article class="panel wow-table wow-breakdown">
+            <div class="panel-head"><div><h2 class="panel-title">Despesas por categoria</h2><p class="panel-subtitle" id="wowBreakdownSubtitle">Valores da aba DRE WOW - AGRUPADO</p></div></div>
+            <div class="table-scroll" id="wowExpenseTable"></div>
           </article>
-          <article class="panel wow-table">
-            <div class="panel-head"><div><h2 class="panel-title">Totens com Garantia Onsite (G.O.)</h2><p class="panel-subtitle">Quantidade de totens e rateio por totem</p></div></div>
-            <div class="table-scroll" id="wowTotemTable"></div>
-          </article>
-        </div>
-        <article class="panel wow-table wow-breakdown">
-          <div class="panel-head"><div><h2 class="panel-title">Despesas por categoria</h2><p class="panel-subtitle" id="wowBreakdownSubtitle">Valores da aba DRE WOW - AGRUPADO</p></div></div>
-          <div class="table-scroll" id="wowExpenseTable"></div>
-        </article>
+        </section>
+        <p class="status-note"><span id="wowDreDataStatus" aria-live="polite">Carregando dados financeiros da planilha...</span></p>
       </section>
-
-      <footer>
-        <span>Fonte: DRE WOW - AGRUPADO</span>
-        <span id="wowDataStatus" aria-live="polite">Carregando dados da planilha...</span>
-      </footer>
+      <section class="wow-view" id="wow-view-executive" role="tabpanel" aria-label="Visão executiva" hidden><div id="wowExecutiveContent"></div></section>
+      <section class="wow-view" id="wow-view-sla" role="tabpanel" aria-label="SLA e performance" hidden><div id="wowSlaContent"></div></section>
+      <section class="wow-view" id="wow-view-finance" role="tabpanel" aria-label="Gestão financeira" hidden><div id="wowFinanceContent"></div></section>
+      <section class="wow-view" id="wow-view-quality" role="tabpanel" aria-label="Qualidade e reincidência" hidden><div id="wowQualityContent"></div></section>
+      <section class="wow-view" id="wow-view-team" role="tabpanel" aria-label="Equipe e produtividade" hidden><div id="wowTeamContent"></div></section>
+      <section class="wow-view" id="wow-view-assets" role="tabpanel" aria-label="Clientes e equipamentos" hidden><div id="wowAssetsContent"></div></section>
+      <footer><span>Fonte: Google Sheets · Banco de dados chamados</span><span id="wowDataStatus" aria-live="polite">Aguardando carregamento do banco de dados...</span></footer>
     </section>
     <section class="dashboard-panel" id="panel-logistics" role="tabpanel" aria-labelledby="tab-logistics" hidden>
       <section class="filters" aria-label="Filtros de logística">
@@ -568,6 +628,7 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script type="module" src="./wow-dashboard.js"></script>
   <script>
     const MONTHS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
     const MONTH_KEYS = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
@@ -579,6 +640,7 @@
       "quarter-3": [6, 7, 8],
       "quarter-4": [9, 10, 11]
     };
+    let WOW_DATA = null;
     const PERIOD_LABELS = {
       "semester-1": "1º semestre",
       "semester-2": "2º semestre",
@@ -590,10 +652,10 @@
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1-wphD_EW-7LswSWLU0Or7iqLzaGhhOqO/export?format=csv&gid=1301870631";
     const WOW_SHEET_URL = "https://docs.google.com/spreadsheets/d/1RGu5x3CXuAHpUF5fzdOy-njK6GWsDPW2gzmhjp-4No4/export?format=csv&gid=803779247";
     const WOW_SHEET_PAGE_URL = "https://docs.google.com/spreadsheets/d/1RGu5x3CXuAHpUF5fzdOy-njK6GWsDPW2gzmhjp-4No4/edit?gid=803779247#gid=803779247";
+    const WOW_CALLS_SHEET_PAGE_URL = "https://docs.google.com/spreadsheets/d/1RGu5x3CXuAHpUF5fzdOy-njK6GWsDPW2gzmhjp-4No4/edit?gid=1184166301#gid=1184166301";
     const PRODUCTION_SHEET_URL = "https://docs.google.com/spreadsheets/d/16NQQowdDZ3SI-uV7ICA-bevMrgHT4u3Auwnr5eUcePg/export?format=csv&gid=435516244";
     const PRODUCTION_SHEET_PAGE_URL = "https://docs.google.com/spreadsheets/d/16NQQowdDZ3SI-uV7ICA-bevMrgHT4u3Auwnr5eUcePg/edit?gid=435516244#gid=435516244";
     const FULL_MONTHS = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
-    let WOW_DATA = null;
     let PRODUCTION_DATA = [];
     const OFFICIAL_TOTALS = {
       2025: [3849204.49, 4402864.13, 3720505.26, 4429361.40, 3806279.25, 5826539.68, 5153491.81, 5188276.75, 8174534.79, 8589392.98, 6888445.23, 4667767.45],
@@ -1156,7 +1218,7 @@
         return;
       }
 
-      const selectedMonth = document.querySelector("#wowMonthFilter").value;
+      const selectedMonth = document.querySelector("#wowDreMonthFilter").value;
       const selectedMonths = wow.months.filter(row => selectedMonth === "all" || row.month === Number(selectedMonth));
       const totemMonths = selectedMonths.filter(row => row.units != null || row.costPerTotem != null);
       const sumField = (rows, field) => rows.reduce((total, row) => total + (row[field] ?? 0), 0);
@@ -1769,8 +1831,19 @@
     }
 
     async function refreshWowFromSheet() {
-      const status = document.querySelector("#wowDataStatus");
-      status.textContent = "Atualizando dados da planilha Wow Service...";
+      const results = await Promise.allSettled([
+        window.wowDashboard.refresh(),
+        refreshWowFinancialFromSheet()
+      ]);
+      for (const result of results) {
+        if (result.status === "rejected") console.error("Não foi possível atualizar uma das fontes do painel Wow Service.", result.reason);
+      }
+    }
+
+    async function refreshWowFinancialFromSheet() {
+      const status = document.querySelector("#wowDreDataStatus");
+      status.textContent = "Atualizando DRE Wow Service...";
+      status.classList.remove("negative");
       try {
         const response = await fetch(WOW_SHEET_URL, { cache: "no-store" });
         if (!response.ok) throw new Error(`A planilha Wow Service respondeu com ${response.status}`);
@@ -1778,18 +1851,13 @@
         if (!freshData.months.length) throw new Error("A planilha Wow Service não retornou valores mensais");
         WOW_DATA = freshData;
         renderWowDashboard();
-        status.textContent = `Planilha atualizada às ${new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}. Receita disponível: ${periodForWow(freshData.months, "revenue")}.`;
+        status.textContent = `DRE atualizada às ${new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}.`;
       } catch (error) {
-        status.textContent = "Não foi possível carregar a planilha Wow Service. Verifique a conexão e tente atualizar.";
-        console.warn("Não foi possível atualizar o painel Wow Service pela planilha.", error);
+        status.textContent = `Não foi possível carregar a visão financeira original: ${error.message}`;
+        status.classList.add("negative");
+        console.warn("Não foi possível atualizar a DRE Wow Service pela planilha.", error);
+        throw error;
       }
-    }
-
-    function periodForWow(rows, field) {
-      const available = rows.filter(row => row[field] != null);
-      if (!available.length) return "sem meses disponíveis";
-      const first = Math.min(...available.map(row => row.month)), last = Math.max(...available.map(row => row.month));
-      return first === last ? FULL_MONTHS[first] : `${FULL_MONTHS[first]} a ${FULL_MONTHS[last]}`;
     }
 
     let activeDashboard = "compare";
@@ -1797,6 +1865,7 @@
       activeDashboard = dashboard;
       const dashboards = {
         compare: {
+          eyebrow: "Painel executivo · desempenho comercial",
           title: `2025 <span style="color:var(--lime)">x</span> 2026`,
           copy: "Faturamento, locações e vendas em uma visão comparativa.",
           source: "https://docs.google.com/spreadsheets/d/1-wphD_EW-7LswSWLU0Or7iqLzaGhhOQ/edit?gid=1301870631#gid=1301870631",
@@ -1804,13 +1873,15 @@
           pageTitle: "COMPARATIVO FINANCEIRO"
         },
         wow: {
+          eyebrow: "Análise da operação · suporte técnico",
           title: "Wow Service",
-          copy: "Receitas, despesas e resultado mensal da operação.",
-          source: WOW_SHEET_PAGE_URL,
-          sourceLabel: "Abrir planilha Wow Service ↗",
+          copy: "Chamados, SLA, custos e produtividade da operação de suporte técnico.",
+          source: WOW_CALLS_SHEET_PAGE_URL,
+          sourceLabel: "Abrir banco de chamados ↗",
           pageTitle: "Painel executivo | Wow Service"
         },
         production: {
+          eyebrow: "Planejamento · fábrica e expedição",
           title: "PRODUÇÃO 2026",
           copy: "Pedidos, terminais e previsões de envio por transação, cliente e modelo.",
           source: PRODUCTION_SHEET_PAGE_URL,
@@ -1818,6 +1889,7 @@
           pageTitle: "PRODUÇÃO 2026"
         },
         logistics: {
+          eyebrow: "Operação · expedição e entregas",
           title: "LOGISTICA",
           copy: "Operações, entregas e custos de frete da base ENVIOS 2026.",
           source: LOGISTICS_SHEET_PAGE_URL,
@@ -1834,10 +1906,11 @@
         document.querySelector(`#panel-${name}`).hidden = !selected;
       }
       document.querySelector("#dashboardTitle").innerHTML = selectedDashboard.title;
+      document.querySelector("#dashboardEyebrow").textContent = selectedDashboard.eyebrow;
       document.querySelector("#dashboardCopy").textContent = selectedDashboard.copy;
       document.querySelector("#sourceLink").href = selectedDashboard.source;
       document.querySelector("#sourceLink").textContent = selectedDashboard.sourceLabel;
-      document.title = selectedDashboard.pageTitle;
+      document.title = `Dashboards Videosoft | ${selectedDashboard.pageTitle}`;
     }
 
     async function refreshActiveDashboard() {
@@ -1890,7 +1963,7 @@
       render();
     });
     document.querySelector("#realizationFilter").addEventListener("change", render);
-    document.querySelector("#wowMonthFilter").addEventListener("change", renderWowDashboard);
+    document.querySelector("#wowDreMonthFilter").addEventListener("change", renderWowDashboard);
     for (const id of [
       "productionTransactionFilter", "productionClientFilter",
       "productionModelFilter", "productionEntryMonthFilter", "productionShipmentMonthFilter",
@@ -1920,10 +1993,9 @@
     renderLogistics();
     refreshLogisticsFromSheet();
     render();
-    renderWowDashboard();
+    refreshWowFinancialFromSheet();
     refreshProductionFromSheet();
     refreshFromSheet();
-    refreshWowFromSheet();
   </script>
 </body>
 </html>
