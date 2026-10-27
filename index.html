@@ -59,6 +59,7 @@
     .dashboard-panel[hidden] { display: none; }
     .filters { display: flex; align-items: end; flex-wrap: wrap; gap: 14px 24px; padding: 0 0 20px; border-bottom: 1px solid #dce1d8; }
     .filter { display: grid; gap: 6px; min-width: 170px; }
+    .filter[hidden] { display: none; }
     .filter label { color: #53645b; font-size: 10px; font-weight: 700; letter-spacing: .9px; text-transform: uppercase; }
     .filter select { appearance: none; min-height: 40px; border: 1px solid #d6ddd4; border-radius: 3px; padding: 0 36px 0 12px; color: var(--ink); background: #fffefa; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='m1 1 5 5 5-5' fill='none' stroke='%2353645b' stroke-width='1.5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
     .filter select:focus-visible, a:focus-visible { outline: 3px solid #9ccd50; outline-offset: 2px; }
@@ -158,11 +159,11 @@
     .wow-table table { min-width: 360px; }
     .wow-message { min-height: 250px; padding: 28px; color: #829087; font-size: 13px; text-align: center; }
     .wow-total-row td { border-top: 1px solid #dfe5dc; color: var(--ink); font-weight: 700; }
-    .wow-view-tabs { display: flex; gap: 6px; overflow-x: auto; margin: 0 0 16px; border-bottom: 1px solid #dce1d8; }
-    .wow-view-tab { flex: none; padding: 11px 13px; border: 0; border-bottom: 3px solid transparent; color: #68776e; background: transparent; cursor: pointer; font-size: 11px; font-weight: 700; }
-    .wow-view-tab[aria-selected="true"] { border-bottom-color: var(--lime); color: var(--forest); }
-    .wow-view-tab:focus-visible { outline: 3px solid #9ccd50; outline-offset: -2px; }
-    .wow-view[hidden] { display: none; }
+    .wow-view-tabs, .ecokiosk-view-tabs { display: flex; gap: 6px; overflow-x: auto; margin: 0 0 16px; border-bottom: 1px solid #dce1d8; }
+    .wow-view-tab, .ecokiosk-view-tab { flex: none; padding: 11px 13px; border: 0; border-bottom: 3px solid transparent; color: #68776e; background: transparent; cursor: pointer; font-size: 11px; font-weight: 700; }
+    .wow-view-tab[aria-selected="true"], .ecokiosk-view-tab[aria-selected="true"] { border-bottom-color: var(--lime); color: var(--forest); }
+    .wow-view-tab:focus-visible, .ecokiosk-view-tab:focus-visible { outline: 3px solid #9ccd50; outline-offset: -2px; }
+    .wow-view[hidden], .ecokiosk-view[hidden] { display: none; }
     .wow-kpis { grid-template-columns: repeat(5, minmax(0, 1fr)); }
     .wow-kpi .kpi-value { font-size: clamp(18px, 1.8vw, 25px); }
     .wow-chart-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 14px; }
@@ -181,6 +182,8 @@
     .ifood-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
     .ifood-chart-grid .ifood-trend-list { max-height: 420px; overflow-y: auto; }
     .ifood-load-error { padding: 24px; color: #a43f35; font-size: 13px; }
+    .ecokiosk-data-note { margin: 14px 0 0; padding: 14px 18px; border-left: 3px solid var(--gold); background: #f7f6ef; color: #65736b; font-size: 11px; line-height: 1.6; }
+    .ecokiosk-load-error { padding: 24px; color: #a43f35; font-size: 13px; }
     .wow-month-chart { display: grid; grid-template-columns: repeat(auto-fit, minmax(46px, 1fr)); align-items: end; gap: 7px; min-height: 190px; padding: 20px 18px 13px; }
     .wow-month-item { display: grid; grid-template-rows: 1fr auto; align-items: end; gap: 8px; height: 155px; min-width: 0; text-align: center; }
     .wow-month-track { display: flex; height: 125px; align-items: end; justify-content: center; border-bottom: 1px solid #dce1d8; }
@@ -199,8 +202,8 @@
       .wow-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .wow-chart-grid { grid-template-columns: minmax(0, 1fr); }
       .ifood-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .wow-view-tabs { margin-right: -14px; }
-      .wow-view-tab { padding-right: 10px; padding-left: 10px; }
+      .wow-view-tabs, .ecokiosk-view-tabs { margin-right: -14px; }
+      .wow-view-tab, .ecokiosk-view-tab { padding-right: 10px; padding-left: 10px; }
     }
     .production-filters { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
     .production-filters .filter { min-width: 0; }
@@ -358,6 +361,7 @@
       <button class="dashboard-tab" id="tab-production" type="button" role="tab" aria-selected="false" aria-controls="panel-production" tabindex="-1">PRODUÇÃO 2026</button>
       <button class="dashboard-tab" id="tab-logistics" type="button" role="tab" aria-selected="false" aria-controls="panel-logistics" tabindex="-1">LOGISTICA</button>
       <button class="dashboard-tab" id="tab-ifood" type="button" role="tab" aria-selected="false" aria-controls="panel-ifood" tabindex="-1">IFOOD</button>
+      <button class="dashboard-tab" id="tab-ecokiosk" type="button" role="tab" aria-selected="false" aria-controls="panel-ecokiosk" tabindex="-1">ECOKIOSK</button>
     </nav>
 
     <section class="dashboard-panel" id="panel-compare" role="tabpanel" aria-labelledby="tab-compare">
@@ -642,11 +646,47 @@
       <footer><span>Fonte: Controle de Produção Ifood · Base contratual</span><span id="ifoodDataStatus" role="status">Aguardando dados da planilha.</span></footer>
     </section>
 
+    <section class="dashboard-panel" id="panel-ecokiosk" role="tabpanel" aria-labelledby="tab-ecokiosk" hidden>
+      <section class="filters" aria-label="Filtros da produção ECOKIOSK">
+        <div class="filter"><label for="ecokioskYearFilter">Ano do período</label><select id="ecokioskYearFilter"><option value="all">Todos os anos</option></select></div>
+        <div class="filter"><label for="ecokioskMonthFilter">Mês do período</label><select id="ecokioskMonthFilter"><option value="all">Todos os meses</option></select></div>
+        <div class="filter" id="ecokioskStatusFilterContainer"><label for="ecokioskStatusFilter">Status da produção</label><select id="ecokioskStatusFilter"><option value="all">Todos os status</option></select></div>
+        <p class="period-note" id="ecokioskPeriodNote" aria-live="polite">Carregando dados da planilha ECOKIOSK...</p>
+      </section>
+      <nav class="ecokiosk-view-tabs" id="ecokioskViewTabs" role="tablist" aria-label="Setores de produção ECOKIOSK">
+        <button class="ecokiosk-view-tab" id="ecokiosk-tab-overview" type="button" role="tab" aria-selected="true" aria-controls="ecokiosk-view-overview" data-ecokiosk-view="overview">VISÃO GERAL</button>
+        <button class="ecokiosk-view-tab" id="ecokiosk-tab-cnc" type="button" role="tab" aria-selected="false" aria-controls="ecokiosk-view-cnc" data-ecokiosk-view="cnc" tabindex="-1">CNC</button>
+        <button class="ecokiosk-view-tab" id="ecokiosk-tab-lixa" type="button" role="tab" aria-selected="false" aria-controls="ecokiosk-view-lixa" data-ecokiosk-view="lixa" tabindex="-1">LIXA</button>
+        <button class="ecokiosk-view-tab" id="ecokiosk-tab-cola" type="button" role="tab" aria-selected="false" aria-controls="ecokiosk-view-cola" data-ecokiosk-view="cola" tabindex="-1">COLA</button>
+        <button class="ecokiosk-view-tab" id="ecokiosk-tab-envelopamento" type="button" role="tab" aria-selected="false" aria-controls="ecokiosk-view-envelopamento" data-ecokiosk-view="envelopamento" tabindex="-1">ENVELOPAMENTO</button>
+        <button class="ecokiosk-view-tab" id="ecokiosk-tab-refilamento" type="button" role="tab" aria-selected="false" aria-controls="ecokiosk-view-refilamento" data-ecokiosk-view="refilamento" tabindex="-1">REFILAMENTO</button>
+        <button class="ecokiosk-view-tab" id="ecokiosk-tab-montagem" type="button" role="tab" aria-selected="false" aria-controls="ecokiosk-view-montagem" data-ecokiosk-view="montagem" tabindex="-1">MONTAGEM</button>
+        <button class="ecokiosk-view-tab" id="ecokiosk-tab-3d" type="button" role="tab" aria-selected="false" aria-controls="ecokiosk-view-3d" data-ecokiosk-view="3d" tabindex="-1">3D</button>
+        <button class="ecokiosk-view-tab" id="ecokiosk-tab-rework" type="button" role="tab" aria-selected="false" aria-controls="ecokiosk-view-rework" data-ecokiosk-view="rework" tabindex="-1">RETRABALHOS</button>
+      </nav>
+      <section class="ecokiosk-view" id="ecokiosk-view-overview" role="tabpanel" aria-labelledby="ecokiosk-tab-overview">
+        <div class="wow-chart-grid" id="ecokioskOverviewCharts"></div>
+      </section>
+      <section class="ecokiosk-view" id="ecokiosk-view-cnc" role="tabpanel" aria-labelledby="ecokiosk-tab-cnc" hidden><div class="wow-chart-grid" id="ecokioskSectorCharts-cnc"></div></section>
+      <section class="ecokiosk-view" id="ecokiosk-view-lixa" role="tabpanel" aria-labelledby="ecokiosk-tab-lixa" hidden><div class="wow-chart-grid" id="ecokioskSectorCharts-lixa"></div></section>
+      <section class="ecokiosk-view" id="ecokiosk-view-cola" role="tabpanel" aria-labelledby="ecokiosk-tab-cola" hidden><div class="wow-chart-grid" id="ecokioskSectorCharts-cola"></div></section>
+      <section class="ecokiosk-view" id="ecokiosk-view-envelopamento" role="tabpanel" aria-labelledby="ecokiosk-tab-envelopamento" hidden><div class="wow-chart-grid" id="ecokioskSectorCharts-envelopamento"></div></section>
+      <section class="ecokiosk-view" id="ecokiosk-view-refilamento" role="tabpanel" aria-labelledby="ecokiosk-tab-refilamento" hidden><div class="wow-chart-grid" id="ecokioskSectorCharts-refilamento"></div></section>
+      <section class="ecokiosk-view" id="ecokiosk-view-montagem" role="tabpanel" aria-labelledby="ecokiosk-tab-montagem" hidden><div class="wow-chart-grid" id="ecokioskSectorCharts-montagem"></div></section>
+      <section class="ecokiosk-view" id="ecokiosk-view-3d" role="tabpanel" aria-labelledby="ecokiosk-tab-3d" hidden><div class="wow-chart-grid" id="ecokioskSectorCharts-3d"></div></section>
+      <section class="ecokiosk-view" id="ecokiosk-view-rework" role="tabpanel" aria-labelledby="ecokiosk-tab-rework" hidden>
+        <div class="wow-chart-grid" id="ecokioskReworkCharts"></div>
+      </section>
+      <p class="ecokiosk-data-note" id="ecokioskDataNote"></p>
+      <footer><span>Fonte: Controle de Produção ECOKIOSK</span><span id="ecokioskDataStatus" role="status">Aguardando dados da planilha.</span></footer>
+    </section>
+
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script type="module" src="./wow-dashboard.js"></script>
   <script type="module" src="./ifood-dashboard.js"></script>
+  <script type="module" src="./ecokiosk-dashboard.js"></script>
   <script>
     const MONTHS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
     const MONTH_KEYS = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
@@ -668,6 +708,7 @@
       "quarter-4": "4º trimestre"
     };
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1-wphD_EW-7LswSWLU0Or7iqLzaGhhOqO/export?format=csv&gid=1301870631";
+    const ECOKIOSK_SHEET_PAGE_URL = "https://docs.google.com/spreadsheets/d/1gFOAWUq7Uw-RW-61P7T0A9oaIjNCL0nAkdagfBTn4lE/edit?gid=1218615768#gid=1218615768";
     const WOW_SHEET_URL = "https://docs.google.com/spreadsheets/d/1RGu5x3CXuAHpUF5fzdOy-njK6GWsDPW2gzmhjp-4No4/export?format=csv&gid=803779247";
     const WOW_SHEET_PAGE_URL = "https://docs.google.com/spreadsheets/d/1RGu5x3CXuAHpUF5fzdOy-njK6GWsDPW2gzmhjp-4No4/edit?gid=803779247#gid=803779247";
     const WOW_CALLS_SHEET_PAGE_URL = "https://docs.google.com/spreadsheets/d/1RGu5x3CXuAHpUF5fzdOy-njK6GWsDPW2gzmhjp-4No4/edit?gid=1184166301#gid=1184166301";
@@ -1922,6 +1963,14 @@
           source: IFOOD_SHEET_PAGE_URL,
           sourceLabel: "Abrir planilha IFOOD ↗",
           pageTitle: "IFOOD"
+        },
+        ecokiosk: {
+          eyebrow: "Operação · produção ECOKIOSK",
+          title: "ECOKIOSK",
+          copy: "Volume, evolução de cadastros, etapas de produção e retrabalho.",
+          source: ECOKIOSK_SHEET_PAGE_URL,
+          sourceLabel: "Abrir planilha ECOKIOSK ↗",
+          pageTitle: "ECOKIOSK"
         }
       };
       const selectedDashboard = dashboards[dashboard];
@@ -1953,6 +2002,10 @@
           ifood: () => {
             if (typeof window.refreshIfoodDashboard !== "function") throw new Error("O painel IFOOD ainda está iniciando.");
             return window.refreshIfoodDashboard();
+          },
+          ecokiosk: () => {
+            if (typeof window.refreshEcokioskDashboard !== "function") throw new Error("O painel ECOKIOSK ainda está iniciando.");
+            return window.refreshEcokioskDashboard();
           }
         }[activeDashboard];
         await refresh();
@@ -2007,10 +2060,11 @@
     document.querySelector("#tab-production").addEventListener("click", () => switchDashboard("production"));
     document.querySelector("#tab-logistics").addEventListener("click", () => switchDashboard("logistics"));
     document.querySelector("#tab-ifood").addEventListener("click", () => switchDashboard("ifood"));
+    document.querySelector("#tab-ecokiosk").addEventListener("click", () => switchDashboard("ecokiosk"));
     document.querySelector(".dashboard-tabs").addEventListener("keydown", event => {
       if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
       event.preventDefault();
-      const dashboards = ["compare", "wow", "production", "logistics", "ifood"];
+      const dashboards = ["compare", "wow", "production", "logistics", "ifood", "ecokiosk"];
       const currentIndex = dashboards.indexOf(activeDashboard);
       const nextIndex = event.key === "Home" ? 0
         : event.key === "End" ? dashboards.length - 1
