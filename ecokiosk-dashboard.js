@@ -90,6 +90,7 @@
         (definition.activeFinish === null || !normalize(row[definition.activeFinish])))
       .map(row => ({
         status: normalize(row[definition.activeStatus]),
+        model: normalize(row[2]) || "Modelo não informado",
         quantity: parseQuantity(row[definition.quantity]),
         id: normalize(row[definition.activeId])
       }));
@@ -323,7 +324,7 @@
         groupQuantity(activeRows, row => row.status),
         { scrollable: true }
       ),
-      chartPanel(
+      chartPanel("MODELOS E QUANTIDADES EM ANDAMENTO", "Soma da coluna QTD por modelo/estrutura dos processos ativos.", groupQuantity(activeRows, row => row.model, "structure"), { scrollable: true }), chartPanel(
         "QUANTIDADE CONCLUÍDA POR MÊS",
         `${definition.name} · agrupado pelo mês de ARQUIVADO EM. ${subtitle}.`,
         monthlyQuantity(completed, row => row.archivedDate, row => row.quantity, "registros finalizados", "registro finalizado"),
