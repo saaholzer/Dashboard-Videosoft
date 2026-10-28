@@ -530,6 +530,17 @@
   document.querySelector("#ecokioskMonthFilter").addEventListener("change", render);
   document.querySelector("#ecokioskStatusFilter").addEventListener("change", render);
   document.querySelector("#ecokioskProcessStatusFilter").addEventListener("change", render);
+  document.querySelector("#ecokioskClearFilters").addEventListener("click", () => {
+    for (const id of [
+      "ecokioskYearFilter",
+      "ecokioskMonthFilter",
+      "ecokioskStatusFilter",
+      "ecokioskProcessStatusFilter"
+    ]) {
+      document.querySelector(`#${id}`).value = "all";
+    }
+    render();
+  });
   document.querySelector("#ecokioskViewTabs").addEventListener("click", event => {
     const tab = event.target.closest(".ecokiosk-view-tab");
     if (tab) selectView(tab.dataset.ecokioskView);

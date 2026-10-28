@@ -174,8 +174,8 @@
     .wow-chart-row-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; color: #53645b; font-size: 11px; }
     .wow-chart-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .wow-chart-value { flex: none; color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; }
-    .wow-chart-track { height: 8px; overflow: hidden; border-radius: 6px; background: #edf0eb; }
-    .wow-chart-fill { height: 100%; min-width: 2px; border-radius: inherit; background: var(--forest-2); }
+    .wow-chart-track { display: block; height: 8px; overflow: hidden; border-radius: 6px; background: #edf0eb; }
+    .wow-chart-fill { display: block; height: 100%; min-width: 2px; border-radius: inherit; background: var(--forest-2); }
     .wow-chart-fill.late { background: var(--coral); }
     .wow-chart-fill.alt { background: #6184a0; }
     .wow-chart-note { color: #87938b; font-size: 10px; }
@@ -189,6 +189,14 @@
     .ifood-orders-grid { display: grid; grid-column: 1 / -1; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; min-width: 0; }
     .ifood-month-chart { display: grid; grid-auto-columns: 44px; grid-auto-flow: column; align-items: end; gap: 8px; height: 190px; padding: 18px 19px 13px; overflow-x: auto; }
     .ifood-month-item { display: grid; grid-template-rows: auto 1fr auto; align-items: end; gap: 7px; height: 155px; min-width: 0; text-align: center; }
+    .ifood-chart-button { width: 100%; padding: 0; border: 0; color: inherit; background: transparent; font: inherit; cursor: pointer; }
+    .ifood-chart-button:hover .ifood-month-label, .ifood-chart-button.is-selected .ifood-month-label { color: var(--forest); font-weight: 700; }
+    .ifood-chart-button.is-selected .ifood-month-bar { background: var(--lime); }
+    .ifood-chart-button:focus-visible { outline: 2px solid var(--forest-2); outline-offset: 2px; }
+    .ifood-chart-filter { width: 100%; padding: 0; border: 0; color: inherit; background: transparent; font: inherit; cursor: pointer; text-align: left; }
+    .ifood-chart-filter:hover .wow-chart-name, .ifood-chart-filter.is-selected .wow-chart-name { color: var(--forest); font-weight: 700; }
+    .ifood-chart-filter.is-selected .wow-chart-fill { background: var(--lime); }
+    .ifood-chart-filter:focus-visible { outline: 2px solid var(--forest-2); outline-offset: 2px; }
     .ifood-month-track { display: flex; height: 120px; align-items: end; justify-content: center; border-bottom: 1px solid #dce1d8; }
     .ifood-month-bar { width: min(28px, 70%); min-height: 2px; border-radius: 3px 3px 0 0; background: var(--forest-2); }
     .ifood-month-label { overflow: hidden; color: #718078; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
@@ -693,6 +701,7 @@
         <div class="filter"><label for="ecokioskMonthFilter">Mês do período</label><select id="ecokioskMonthFilter"><option value="all">Todos os meses</option></select></div>
         <div class="filter" id="ecokioskStatusFilterContainer"><label for="ecokioskStatusFilter">Status da produção</label><select id="ecokioskStatusFilter"><option value="all">Todos os status</option></select></div>
         <div class="filter" id="ecokioskProcessStatusFilterContainer" hidden><label for="ecokioskProcessStatusFilter">Status do processo</label><select id="ecokioskProcessStatusFilter"><option value="all">Todos</option><option value="in-progress">Em andamento</option><option value="waiting">Aguardando</option></select></div>
+        <button class="wow-filter-actions" id="ecokioskClearFilters" type="button">Limpar filtros</button>
         <p class="period-note" id="ecokioskPeriodNote" aria-live="polite">Carregando dados da planilha ECOKIOSK...</p>
       </section>
       <nav class="ecokiosk-view-tabs" id="ecokioskViewTabs" role="tablist" aria-label="Setores de produção ECOKIOSK">
