@@ -10,6 +10,11 @@
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   })[character]);
 
+  function columnValue(row, name) {
+    const column = Object.keys(row).find(key => key.trim() === name);
+    return column ? row[column] : "";
+  }
+
   function parseDate(value) {
     const text = normalize(value);
     const match = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(text);
@@ -35,45 +40,76 @@
     return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
   }
 
-  function isSpreadsheetError(value) {
-    return /^#(?:REF!|N\/A|VALUE!)/i.test(normalize(value));
-  }
-
-  function parseCancelledQuantity(value, quantity) {
-    const text = normalize(value);
-    if (!text || isSpreadsheetError(text)) return 0;
-    const entries = text.split(/[,;\r\n]+/).map(entry => entry.trim()).filter(entry => entry && !entry.startsWith("#"));
-    if (!entries.length) return 0;
-    if (entries.length === 1 && /^(?:sim|yes|true|cancelado|cancelada)$/i.test(entries[0])) return quantity;
-    return Math.min(entries.length, quantity);
+  function formatDate(date) {
+    if (!date) return "";
+    const value = new Date(date.timestamp);
+    return `${String(value.getUTCDate()).padStart(2, "0")}/${String(value.getUTCMonth() + 1).padStart(2, "0")}/${value.getUTCFullYear()}`;
   }
 
   function normalizeRow(row) {
     const entryDate = parseDate(row.Entrada);
+    const plannedDepartureDate = parseDate(row["Data Prevista de Saída"]);
+    const plannedDeliveryDate = parseDate(columnValue(row, "Prevista de Entrega"));
+    const departureDate = parseDate(row["Data real da Previsão de saída"]);
     const deliveryDate = parseDate(row["Data Real de Entrega totem (executada)"]);
+    const newDepartureDate = normalize(columnValue(row, "NOVA DATA DE ENVIO"));
     const serials = normalize(row["Num Série do Totem"]).split(/[,;\r\n]+/).map(serial => serial.trim()).filter(Boolean);
     const quantity = parseQuantity(row.Quantidade);
     return {
+      order: normalize(row.Pedido) || "Pedido não informado",
       entryDate,
+      plannedDepartureDate,
+      plannedDeliveryDate,
+      newDepartureDate,
+      departureDate,
       deliveryDate,
       quantity,
+      transaction: normalize(row.Transação) || "Não informado",
       model: normalize(row["Modelo do totem"]) || "Não informado",
       status: normalize(row["Status do totem"]) || "Não informado",
-      activationStatus: normalizeKey(row["Totem Ativo / Não Ativo"]),
-      cancelledQuantity: parseCancelledQuantity(row.Cancelados, quantity),
-      cancellationDataError: isSpreadsheetError(row.Cancelados),
+      activationStatus: normalizeKey(columnValue(row, "Totem Ativo / Não Ativo")),
       brand: normalize(row.Marcas) || "Não informado",
-      sla: normalize(row["Atendimento SLA Videosoft"]),
+      sla: normalize(row["Atendimento SLA Videosoft"]) || "Não informado",
+      activationStatusLabel: normalize(columnValue(row, "Totem Ativo / Não Ativo")) || "Status não informado",
       recommissionedSerials: serials.filter(serial => /^R/i.test(serial))
     };
+  }
+
+  function productionShipmentStatus(row) {
+    if (!row.plannedDepartureDate) return null;
+    const planned = row.plannedDepartureDate.timestamp;
+    if (row.departureDate) {
+      if (row.departureDate.timestamp > planned) return "Atrasado";
+      if (row.departureDate.timestamp < planned) return "Adiantando";
+      return "No prazo";
+    }
+    const today = new Date();
+    const todayTimestamp = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+    return todayTimestamp > planned ? "Atrasado" : "No prazo";
+  }
+
+  function shipmentCompletionStatus(row) {
+    return row.departureDate ? "Enviado" : "A Enviar";
   }
 
   function selectedRows(ignoreBrand = false) {
     const year = document.querySelector("#ifoodYearFilter").value;
     const brand = document.querySelector("#ifoodBrandFilter").value;
+    const transaction = document.querySelector("#ifoodTransactionFilter").value;
+    const status = document.querySelector("#ifoodStatusFilter").value;
+    const model = document.querySelector("#ifoodModelFilter").value;
+    const sla = document.querySelector("#ifoodSlaFilter").value;
+    const shipmentStatus = document.querySelector("#ifoodShipmentStatusFilter").value;
+    const shipmentCompletion = document.querySelector("#ifoodShipmentCompletionFilter").value;
     return records.filter(row =>
       (year === "all" || String(row.entryDate?.year) === year) &&
-      (ignoreBrand || brand === "all" || row.brand === brand)
+      (ignoreBrand || brand === "all" || row.brand === brand) &&
+      (transaction === "all" || normalizeKey(row.transaction) === transaction) &&
+      (status === "all" || normalizeKey(row.status) === status) &&
+      (model === "all" || row.model === model) &&
+      (sla === "all" || normalizeKey(row.sla) === sla) &&
+      (shipmentStatus === "all" || productionShipmentStatus(row) === shipmentStatus) &&
+      (shipmentCompletion === "all" || shipmentCompletionStatus(row) === shipmentCompletion)
     );
   }
 
@@ -93,35 +129,23 @@
   }
 
   function operationalStatusQuantities(rows) {
-    const totals = { "Totens ativos": 0, "Totens inativos": 0, "Totens cancelados": 0 };
-    let activationClassifiedQuantity = 0;
-    let unclassifiedQuantity = 0;
-    let cancellationErrorRows = 0;
+    const labels = new Map([
+      ["ativo", "Totens ativos"],
+      ["inativo", "Totens inativos"],
+      ["cancelado", "Totens cancelados"],
+      ["recomissionado", "Totens recomissionados"],
+      ["parcialmente inativo", "Totens parcialmente inativos"],
+      ["nao informado", "Status não informado"]
+    ]);
+    const totals = new Map();
     for (const row of rows) {
-      const cancelled = row.cancelledQuantity;
-      const remaining = Math.max(0, row.quantity - cancelled);
-      totals["Totens cancelados"] += cancelled;
-      if (row.cancellationDataError) cancellationErrorRows += 1;
-      if (["ativo", "ativa", "ativos", "ativas", "sim"].includes(row.activationStatus)) {
-        totals["Totens ativos"] += remaining;
-        activationClassifiedQuantity += remaining;
-      } else if (["nao ativo", "nao ativa", "nao ativos", "nao ativas", "inativo", "inativa", "inativos", "inativas", "nao", "0", "false"].includes(row.activationStatus)) {
-        totals["Totens inativos"] += remaining;
-        activationClassifiedQuantity += remaining;
-      } else {
-        unclassifiedQuantity += remaining;
-      }
+      const key = row.activationStatus || "nao informado";
+      const name = labels.get(key) ?? row.activationStatusLabel;
+      const total = totals.get(key) ?? { name, value: 0 };
+      total.value += row.quantity;
+      totals.set(key, total);
     }
-    const activationDisplay = value => activationClassifiedQuantity ? integer.format(value) : "—";
-    const cancellationDisplay = cancellationErrorRows
-      ? totals["Totens cancelados"] ? `≥ ${integer.format(totals["Totens cancelados"])}` : "Incompleto"
-      : integer.format(totals["Totens cancelados"]);
-    const items = [
-      { name: "Totens ativos", value: totals["Totens ativos"], display: activationDisplay(totals["Totens ativos"]) },
-      { name: "Totens inativos", value: totals["Totens inativos"], display: activationDisplay(totals["Totens inativos"]) },
-      { name: "Totens cancelados", value: totals["Totens cancelados"], display: cancellationDisplay }
-    ];
-    return { items, unclassifiedQuantity, cancellationErrorRows };
+    return [...totals.values()];
   }
 
   function chartPanel(title, subtitle, items, { format = "count", scrollable = false, order = "value", emptyMessage = "Sem dados para os filtros selecionados." } = {}) {
@@ -139,11 +163,12 @@
     return `<article class="panel"><div class="panel-head"><div><h2 class="panel-title">${escapeHtml(title)}</h2><p class="panel-subtitle">${escapeHtml(subtitle)}</p></div></div><div class="${listClass}">${rows}</div></article>`;
   }
 
-  function groupedByMonth(rows, valueOf) {
+  function groupedByMonth(rows, valueOf, dateOf = row => row.entryDate) {
     const months = new Map();
     for (const row of rows) {
-      if (!row.entryDate) continue;
-      const { year, month } = row.entryDate;
+      const date = dateOf(row);
+      if (!date) continue;
+      const { year, month } = date;
       const key = `${year}-${String(month).padStart(2, "0")}`;
       if (!months.has(key)) months.set(key, { name: `${monthNames[month]} ${year}`, year, month, value: 0 });
       valueOf(months.get(key), row);
@@ -151,9 +176,70 @@
     return [...months.values()].sort((a, b) => a.year - b.year || a.month - b.month);
   }
 
+  function verticalBarChart(title, subtitle, items, { columnWidth = 44, labelOf = item => item.name } = {}) {
+    if (!items.length) {
+      return `<article class="panel"><div class="panel-head"><div><h2 class="panel-title">${escapeHtml(title)}</h2><p class="panel-subtitle">${escapeHtml(subtitle)}</p></div></div><div class="wow-message">Sem dados para os filtros selecionados.</div></article>`;
+    }
+    const maximum = Math.max(...items.map(item => item.scaleValue ?? item.value), 1);
+    const bars = items.map(item => {
+      const height = Math.max(2, (item.scaleValue ?? item.value) / maximum * 100);
+      const label = labelOf(item);
+      const value = item.display ?? integer.format(item.value);
+      const note = item.note ? ` · ${item.note}` : "";
+      return `<div class="ifood-month-item" title="${escapeHtml(`${item.name}: ${value}${note}`)}"><span class="ifood-month-value">${escapeHtml(value)}</span><div class="ifood-month-track"><div class="ifood-month-bar" style="height:${height.toFixed(1)}%"></div></div><span class="ifood-month-label">${escapeHtml(label)}</span></div>`;
+    }).join("");
+    return `<article class="panel"><div class="panel-head"><div><h2 class="panel-title">${escapeHtml(title)}</h2><p class="panel-subtitle">${escapeHtml(subtitle)}</p></div></div><div class="ifood-month-chart" style="grid-auto-columns:${columnWidth}px" role="img" aria-label="${escapeHtml(title)}">${bars}</div></article>`;
+  }
+
+  function verticalMonthChart(title, subtitle, months) {
+    return verticalBarChart(title, subtitle, months, {
+      labelOf: month => Number.isInteger(month.month) && Number.isInteger(month.year)
+        ? `${monthNames[month.month]}/${String(month.year).slice(-2)}`
+        : month.name
+    });
+  }
+
   function monthQuantityChart(rows) {
     const months = groupedByMonth(rows, (month, row) => { month.value += row.quantity; });
-    return chartPanel("Totens por mês e ano", "Quantidade total de totens agrupada pelo mês de entrada e ano.", months, { scrollable: true, order: "chronological" });
+    return verticalMonthChart("Totens por mês e ano", "Quantidade total de totens agrupada pelo mês de entrada e ano.", months);
+  }
+
+  function departureQuantityChart(rows) {
+    const months = groupedByMonth(
+      rows,
+      (month, row) => { month.value += row.quantity; },
+      row => row.departureDate
+    );
+    return verticalMonthChart(
+      "Totens enviados por mês",
+      "Quantidade agrupada pelo mês da Data real da Previsão de saída.",
+      months
+    );
+  }
+
+  function productionShipmentStatusChart(rows) {
+    const totals = new Map([
+      ["Atrasado", 0],
+      ["Adiantando", 0],
+      ["No prazo", 0]
+    ]);
+    for (const row of rows) {
+      const status = productionShipmentStatus(row);
+      if (!status) continue;
+      totals.set(status, totals.get(status) + row.quantity);
+    }
+    const classifiedQuantity = [...totals.values()].reduce((sum, quantity) => sum + quantity, 0);
+    const items = [...totals].map(([name, value]) => ({
+      name,
+      value,
+      display: `${integer.format(value)} · ${decimal.format(classifiedQuantity ? value / classifiedQuantity * 100 : 0)}%`
+    }));
+    return chartPanel(
+      "Status de envio da produção",
+      "Quantidade e participação no total classificado; comparação entre a previsão de saída e a data real. Sem data real, compara a previsão com hoje.",
+      items,
+      { order: "chronological" }
+    );
   }
 
   function annualQuantityChart(rows) {
@@ -173,9 +259,13 @@
         const late = month.late ?? 0;
         const rated = onTime + late;
         const rate = rated ? onTime / rated * 100 : 0;
-        return { name: month.name, value: rate, scaleValue: rate, display: `${decimal.format(rate)}%`, note: `${integer.format(onTime)} dentro do prazo · ${integer.format(late)} atrasados · ${integer.format(rated)} classificados` };
+        return { ...month, value: rate, scaleValue: rate, display: `${decimal.format(rate)}%`, note: `${integer.format(onTime)} dentro do prazo · ${integer.format(late)} atrasados · ${integer.format(rated)} classificados` };
       });
-    return chartPanel("Atendimento SLA por mês e ano", "SLA Videosoft por mês e ano de entrada; registros sem classificação ficam fora da taxa.", months, { format: "percent", scrollable: true, order: "chronological" });
+    return verticalMonthChart(
+      "Atendimento SLA por mês e ano",
+      "SLA Videosoft por mês e ano de entrada; registros sem classificação ficam fora da taxa. Passe o cursor sobre as barras para ver os totais.",
+      months
+    );
   }
 
   function deliveryLeadTimeChart(rows) {
@@ -188,13 +278,42 @@
     }).filter(month => month.units > 0)
       .map(month => {
         const average = month.weightedDays / month.units;
-        return { name: month.name, value: average, scaleValue: average, display: `${decimal.format(average)} dias`, note: `${integer.format(month.units)} totens com as duas datas` };
+        return { ...month, value: average, scaleValue: average, display: `${decimal.format(average)} dias`, note: `${integer.format(month.units)} totens com as duas datas` };
       });
-    return chartPanel("Prazo médio até a entrega real", "Média mensal entre a entrada do pedido e a data real de entrega executada, ponderada pela quantidade.", months, { format: "days", scrollable: true, order: "chronological" });
+    return verticalMonthChart(
+      "Prazo médio até a entrega real",
+      "Média mensal entre a entrada do pedido e a data real de entrega executada, ponderada pela quantidade.",
+      months
+    );
   }
 
   function countKpi(label, value, note) {
     return `<article class="kpi wow-kpi"><p class="kpi-label"><span class="kpi-dot"></span>${escapeHtml(label)}</p><p class="kpi-value">${escapeHtml(value)}</p><p class="kpi-foot">${escapeHtml(note)}</p></article>`;
+  }
+
+  function recommissionedOrdersTable(rows) {
+    const orders = rows.filter(row => row.recommissionedSerials.length);
+    const subtitle = `${integer.format(orders.length)} pedidos com ${integer.format(orders.reduce((sum, row) => sum + row.recommissionedSerials.length, 0))} seriais recomissionados.`;
+    if (!orders.length) {
+      return `<article class="panel"><div class="panel-head"><div><h2 class="panel-title">Pedidos recomissionados</h2><p class="panel-subtitle">${escapeHtml(subtitle)}</p></div></div><div class="wow-message">Não há pedidos recomissionados para os filtros selecionados.</div></article>`;
+    }
+    const tableRows = orders.map(row =>
+      `<tr><td>${escapeHtml(row.order)}</td><td>${escapeHtml(row.brand)}</td><td>${escapeHtml(row.recommissionedSerials.join(", "))}</td><td>${escapeHtml(row.status)}</td></tr>`
+    ).join("");
+    return `<article class="panel"><div class="panel-head"><div><h2 class="panel-title">Pedidos recomissionados</h2><p class="panel-subtitle">${escapeHtml(subtitle)}</p></div></div><div class="ifood-recommissioned-table-wrap"><table class="ifood-recommissioned-table"><thead><tr><th scope="col">Pedido</th><th scope="col">Marca</th><th scope="col">Seriais</th><th scope="col">Status</th></tr></thead><tbody>${tableRows}</tbody></table></div></article>`;
+  }
+
+  function orderLookupTable(rows) {
+    const tableRows = rows.map(row => {
+      const newDepartureDate = parseDate(row.newDepartureDate);
+      return `<tr><td>${escapeHtml(row.order)}</td><td>${escapeHtml(row.brand)}</td><td>${escapeHtml(row.model)}</td><td>${integer.format(row.quantity)}</td><td>${escapeHtml(formatDate(row.plannedDepartureDate) || "—")}</td><td>${escapeHtml(formatDate(row.plannedDeliveryDate) || "—")}</td><td>${escapeHtml(formatDate(newDepartureDate) || row.newDepartureDate || "—")}</td></tr>`;
+    }).join("");
+    const subtitle = `${integer.format(rows.length)} pedidos no recorte selecionado.`;
+    return `<article class="panel"><div class="panel-head"><div><h2 class="panel-title">Consulta de pedidos</h2><p class="panel-subtitle">${escapeHtml(subtitle)}</p></div></div><div class="ifood-order-table-wrap"><table class="ifood-order-table"><thead><tr><th scope="col">Pedido</th><th scope="col">Marca</th><th scope="col">Modelo</th><th scope="col">Qtd.</th><th scope="col">Data prevista de saída</th><th scope="col">Data prevista de entrega</th><th scope="col">Nova data de envio</th></tr></thead><tbody>${tableRows}</tbody></table></div></article>`;
+  }
+
+  function orderTables(rows) {
+    return `<div class="ifood-orders-grid">${recommissionedOrdersTable(rows)}${orderLookupTable(rows)}</div>`;
   }
 
   function render() {
@@ -214,8 +333,20 @@
     const brand = document.querySelector("#ifoodBrandFilter").value;
     const yearLabel = year === "all" ? "todos os anos" : year;
     const brandLabel = brand === "all" ? "todas as marcas" : brand;
+    const activeFilters = [
+      ["Transação", "ifoodTransactionFilter"],
+      ["Status", "ifoodStatusFilter"],
+      ["Modelo", "ifoodModelFilter"],
+      ["SLA", "ifoodSlaFilter"],
+      ["Status do envio", "ifoodShipmentStatusFilter"],
+      ["Envio", "ifoodShipmentCompletionFilter"]
+    ].flatMap(([label, id]) => {
+      const select = document.querySelector(`#${id}`);
+      return select.value === "all" ? [] : [`${label}: ${select.selectedOptions[0].textContent}`];
+    });
 
-    document.querySelector("#ifoodPeriodNote").textContent = `${integer.format(rows.length)} registros · ${integer.format(sumQuantity(rows))} totens · ${yearLabel} · ${brandLabel}`;
+    document.querySelector("#ifoodPeriodNote").textContent =
+      `${integer.format(rows.length)} registros · ${integer.format(sumQuantity(rows))} totens · ${yearLabel} · ${brandLabel}${activeFilters.length ? ` · ${activeFilters.join(" · ")}` : ""}`;
     document.querySelector("#ifoodKpis").innerHTML = [
       countKpi("Totens", integer.format(sumQuantity(rows)), "Soma da quantidade na planilha"),
       countKpi("Atendimento SLA", slaTotal ? `${decimal.format(onTime / slaTotal * 100)}%` : "—", `${integer.format(onTime)} dentro do prazo de ${integer.format(slaTotal)} classificados`),
@@ -224,33 +355,22 @@
     ].join("");
 
     const brandRows = selectedRows(true);
-    const recomRows = serialCount
-      ? [{ name: "Seriais iniciados com R", value: serialCount, note: "Quantidade de seriais identificados como recomissionados" }]
-      : [];
     const operationalStatus = operationalStatusQuantities(rows);
-    const operationalStatusNotes = [];
-    if (operationalStatus.unclassifiedQuantity) {
-      const unclassified = operationalStatus.unclassifiedQuantity;
-      operationalStatusNotes.push(`${integer.format(unclassified)} ${unclassified === 1 ? "totem sem" : "totens sem"} situação ativa/inativa informada`);
-    }
-    if (operationalStatus.cancellationErrorRows) {
-      const errors = operationalStatus.cancellationErrorRows;
-      operationalStatusNotes.push(`${integer.format(errors)} ${errors === 1 ? "registro com erro" : "registros com erro"} nas células de cancelamento`);
-    }
-    const operationalStatusSubtitle = [
-      "Ativos e inativos pela coluna “Totem Ativo / Não Ativo”; cancelados pelos seriais na coluna “Cancelados”.",
-      ...operationalStatusNotes
-    ].join(" ");
+    const statusAndAnnualCharts = `<div class="ifood-status-chart-grid">${productionShipmentStatusChart(rows)}${annualQuantityChart(rows)}${chartPanel("Totens por status", "Soma da quantidade por status do totem.", groupedQuantities(rows, row => row.status))}${chartPanel("Visão de totens por situação", "Soma da coluna Quantidade para cada situação da coluna AE: Totem Ativo / Não Ativo.", operationalStatus, { order: "chronological" })}</div>`;
     document.querySelector("#ifoodCharts").innerHTML = [
       monthQuantityChart(rows),
-      annualQuantityChart(rows),
+      departureQuantityChart(rows),
+      statusAndAnnualCharts,
       chartPanel("Totens por modelo", "Soma da quantidade por modelo de totem.", groupedQuantities(rows, row => row.model), { scrollable: true }),
-      chartPanel("Totens por status", "Soma da quantidade por status do totem.", groupedQuantities(rows, row => row.status)),
-      chartPanel("Visão de totens ativos, inativos e cancelados", operationalStatusSubtitle, operationalStatus.items, { order: "chronological" }),
       slaMonthlyChart(rows),
-      chartPanel("Totens recomissionados", "Seriais cujo valor começa com a letra R, conforme solicitado.", recomRows),
+      orderTables(rows),
       deliveryLeadTimeChart(rows),
-      chartPanel("Totens por marca", "Soma da quantidade por marca; o filtro de marca aplica-se aos demais gráficos.", groupedQuantities(brandRows, row => row.brand), { scrollable: true })
+      verticalBarChart(
+        "Totens por marca",
+        "Soma da quantidade por marca; o filtro de marca aplica-se aos demais gráficos.",
+        groupedQuantities(brandRows, row => row.brand),
+        { columnWidth: 88 }
+      )
     ].join("");
   }
 
@@ -258,8 +378,22 @@
     const years = [...new Set(records.filter(row => row.entryDate).map(row => row.entryDate.year))].sort((a, b) => a - b);
     const brands = [...new Set(records.map(row => row.brand).filter(brand => brand && brand !== "Não informado"))]
       .sort((a, b) => a.localeCompare(b, "pt-BR"));
+    const filterDefinitions = [
+      { id: "ifoodTransactionFilter", label: "Todas as transações", values: records.map(row => row.transaction), keyOf: normalizeKey },
+      { id: "ifoodStatusFilter", label: "Todos os status", values: records.map(row => row.status), keyOf: normalizeKey },
+      { id: "ifoodModelFilter", label: "Todos os modelos", values: records.map(row => row.model), keyOf: value => value },
+      { id: "ifoodSlaFilter", label: "Todos os SLA", values: records.map(row => row.sla || "Não informado"), keyOf: normalizeKey },
+      { id: "ifoodShipmentStatusFilter", label: "Todos os status de envio", values: ["Adiantando", "Atrasado", "No prazo"], keyOf: value => value },
+      { id: "ifoodShipmentCompletionFilter", label: "Todos", values: ["A Enviar", "Enviado"], keyOf: value => value }
+    ];
     document.querySelector("#ifoodYearFilter").innerHTML = `<option value="all">Todos os anos</option>${years.map(year => `<option value="${year}">${year}</option>`).join("")}`;
     document.querySelector("#ifoodBrandFilter").innerHTML = `<option value="all">Todas as marcas</option>${brands.map(brand => `<option value="${escapeHtml(brand)}">${escapeHtml(brand)}</option>`).join("")}`;
+    for (const { id, label, values, keyOf } of filterDefinitions) {
+      const uniqueOptions = new Map(values.map(value => [keyOf(value), value]));
+      const options = [...uniqueOptions].sort((a, b) => a[1].localeCompare(b[1], "pt-BR"));
+      document.querySelector(`#${id}`).innerHTML =
+        `<option value="all">${label}</option>${options.map(([key, value]) => `<option value="${escapeHtml(key)}">${escapeHtml(value)}</option>`).join("")}`;
+    }
   }
 
   async function refreshIfoodDashboard() {
@@ -292,6 +426,27 @@
 
   document.querySelector("#ifoodYearFilter").addEventListener("change", render);
   document.querySelector("#ifoodBrandFilter").addEventListener("change", render);
+  document.querySelector("#ifoodTransactionFilter").addEventListener("change", render);
+  document.querySelector("#ifoodStatusFilter").addEventListener("change", render);
+  document.querySelector("#ifoodModelFilter").addEventListener("change", render);
+  document.querySelector("#ifoodSlaFilter").addEventListener("change", render);
+  document.querySelector("#ifoodShipmentStatusFilter").addEventListener("change", render);
+  document.querySelector("#ifoodShipmentCompletionFilter").addEventListener("change", render);
+  document.querySelector("#ifoodClearFilters").addEventListener("click", () => {
+    for (const id of [
+      "ifoodYearFilter",
+      "ifoodBrandFilter",
+      "ifoodTransactionFilter",
+      "ifoodStatusFilter",
+      "ifoodModelFilter",
+      "ifoodSlaFilter",
+      "ifoodShipmentStatusFilter",
+      "ifoodShipmentCompletionFilter"
+    ]) {
+      document.querySelector(`#${id}`).value = "all";
+    }
+    render();
+  });
   window.refreshIfoodDashboard = refreshIfoodDashboard;
   refreshIfoodDashboard().catch(error => console.error("Falha na carga inicial do painel IFOOD.", error));
 })();

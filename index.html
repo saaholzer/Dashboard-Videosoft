@@ -181,6 +181,38 @@
     .wow-chart-note { color: #87938b; font-size: 10px; }
     .ifood-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
     .ifood-chart-grid .ifood-trend-list { max-height: 420px; overflow-y: auto; }
+    .ifood-status-chart-grid { display: grid; grid-column: 1 / -1; grid-template-areas: "shipment annual" "totem-status situation"; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; min-width: 0; }
+    .ifood-status-chart-grid > :nth-child(1) { grid-area: shipment; }
+    .ifood-status-chart-grid > :nth-child(2) { grid-area: annual; }
+    .ifood-status-chart-grid > :nth-child(3) { grid-area: totem-status; }
+    .ifood-status-chart-grid > :nth-child(4) { grid-area: situation; }
+    .ifood-orders-grid { display: grid; grid-column: 1 / -1; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; min-width: 0; }
+    .ifood-month-chart { display: grid; grid-auto-columns: 44px; grid-auto-flow: column; align-items: end; gap: 8px; height: 190px; padding: 18px 19px 13px; overflow-x: auto; }
+    .ifood-month-item { display: grid; grid-template-rows: auto 1fr auto; align-items: end; gap: 7px; height: 155px; min-width: 0; text-align: center; }
+    .ifood-month-track { display: flex; height: 120px; align-items: end; justify-content: center; border-bottom: 1px solid #dce1d8; }
+    .ifood-month-bar { width: min(28px, 70%); min-height: 2px; border-radius: 3px 3px 0 0; background: var(--forest-2); }
+    .ifood-month-label { overflow: hidden; color: #718078; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+    .ifood-month-value { color: #53645b; font-size: 9px; font-weight: 600; }
+    .ifood-recommissioned-table-wrap { max-height: 420px; overflow-x: hidden; overflow-y: auto; padding: 0 19px 16px; }
+    .ifood-recommissioned-table { width: 100%; min-width: 0; max-width: 100%; table-layout: fixed; border-collapse: collapse; color: #53645b; font-size: 11px; text-align: left; }
+    .ifood-recommissioned-table th:nth-child(1), .ifood-recommissioned-table td:nth-child(1) { width: 15%; }
+    .ifood-recommissioned-table th:nth-child(2), .ifood-recommissioned-table td:nth-child(2) { width: 22%; }
+    .ifood-recommissioned-table th:nth-child(3), .ifood-recommissioned-table td:nth-child(3) { width: 36%; }
+    .ifood-recommissioned-table th:nth-child(4), .ifood-recommissioned-table td:nth-child(4) { width: 27%; }
+    .ifood-recommissioned-table th { position: sticky; top: 0; z-index: 1; background: var(--surface); color: #718078; font-size: 10px; font-weight: 700; }
+    .ifood-recommissioned-table th, .ifood-recommissioned-table td { padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; white-space: normal; overflow-wrap: anywhere; }
+    .ifood-recommissioned-table td:nth-child(3) { font-variant-numeric: tabular-nums; }
+    .ifood-order-table-wrap { max-height: 420px; overflow-y: auto; padding: 0 10px 16px; }
+    .ifood-order-table { width: 100%; min-width: 0; max-width: 100%; table-layout: fixed; border-collapse: collapse; color: #53645b; font-size: 9px; text-align: left; }
+    .ifood-order-table th, .ifood-order-table td { padding: 7px 4px; border-bottom: 1px solid var(--line); vertical-align: top; white-space: normal; overflow-wrap: anywhere; }
+    .ifood-order-table th { position: sticky; top: 0; z-index: 1; background: var(--surface); color: #718078; font-size: 9px; font-weight: 700; }
+    .ifood-order-table th:nth-child(1), .ifood-order-table td:nth-child(1) { width: 12%; }
+    .ifood-order-table th:nth-child(2), .ifood-order-table td:nth-child(2) { width: 15%; }
+    .ifood-order-table th:nth-child(3), .ifood-order-table td:nth-child(3) { width: 14%; }
+    .ifood-order-table th:nth-child(4), .ifood-order-table td:nth-child(4) { width: 7%; }
+    .ifood-order-table th:nth-child(5), .ifood-order-table td:nth-child(5),
+    .ifood-order-table th:nth-child(6), .ifood-order-table td:nth-child(6),
+    .ifood-order-table th:nth-child(7), .ifood-order-table td:nth-child(7) { width: 17.3%; }
     .ifood-load-error { padding: 24px; color: #a43f35; font-size: 13px; }
     .ecokiosk-data-note { margin: 14px 0 0; padding: 14px 18px; border-left: 3px solid var(--gold); background: #f7f6ef; color: #65736b; font-size: 11px; line-height: 1.6; }
     .ecokiosk-load-error { padding: 24px; color: #a43f35; font-size: 13px; }
@@ -201,6 +233,8 @@
     @media (max-width: 640px) {
       .wow-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .wow-chart-grid { grid-template-columns: minmax(0, 1fr); }
+      .ifood-status-chart-grid { grid-column: auto; grid-template-columns: minmax(0, 1fr); grid-template-areas: "shipment" "totem-status" "annual" "situation"; }
+      .ifood-orders-grid { grid-column: auto; grid-template-columns: minmax(0, 1fr); }
       .ifood-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .wow-view-tabs, .ecokiosk-view-tabs { margin-right: -14px; }
       .wow-view-tab, .ecokiosk-view-tab { padding-right: 10px; padding-left: 10px; }
@@ -639,6 +673,13 @@
       <section class="filters ifood-filters" aria-label="Filtros da operação IFOOD">
         <div class="filter"><label for="ifoodYearFilter">Ano de entrada</label><select id="ifoodYearFilter"><option value="all">Todos os anos</option></select></div>
         <div class="filter"><label for="ifoodBrandFilter">Marca</label><select id="ifoodBrandFilter"><option value="all">Todas as marcas</option></select></div>
+        <div class="filter"><label for="ifoodTransactionFilter">Transação</label><select id="ifoodTransactionFilter"><option value="all">Todas as transações</option></select></div>
+        <div class="filter"><label for="ifoodStatusFilter">Status</label><select id="ifoodStatusFilter"><option value="all">Todos os status</option></select></div>
+        <div class="filter"><label for="ifoodModelFilter">Modelo</label><select id="ifoodModelFilter"><option value="all">Todos os modelos</option></select></div>
+        <div class="filter"><label for="ifoodSlaFilter">SLA</label><select id="ifoodSlaFilter"><option value="all">Todos os SLA</option></select></div>
+        <div class="filter"><label for="ifoodShipmentStatusFilter">Status do envio</label><select id="ifoodShipmentStatusFilter"><option value="all">Todos os status de envio</option></select></div>
+        <div class="filter"><label for="ifoodShipmentCompletionFilter">Enviado / a enviar</label><select id="ifoodShipmentCompletionFilter"><option value="all">Todos</option></select></div>
+        <button class="wow-filter-actions" id="ifoodClearFilters" type="button">Limpar filtros</button>
         <p class="period-note" id="ifoodPeriodNote" aria-live="polite">Carregando dados da planilha IFOOD...</p>
       </section>
       <section class="kpis wow-kpis ifood-kpis" id="ifoodKpis" aria-label="Indicadores da operação IFOOD"></section>
@@ -651,6 +692,7 @@
         <div class="filter"><label for="ecokioskYearFilter">Ano do período</label><select id="ecokioskYearFilter"><option value="all">Todos os anos</option></select></div>
         <div class="filter"><label for="ecokioskMonthFilter">Mês do período</label><select id="ecokioskMonthFilter"><option value="all">Todos os meses</option></select></div>
         <div class="filter" id="ecokioskStatusFilterContainer"><label for="ecokioskStatusFilter">Status da produção</label><select id="ecokioskStatusFilter"><option value="all">Todos os status</option></select></div>
+        <div class="filter" id="ecokioskProcessStatusFilterContainer" hidden><label for="ecokioskProcessStatusFilter">Status do processo</label><select id="ecokioskProcessStatusFilter"><option value="all">Todos</option><option value="in-progress">Em andamento</option><option value="waiting">Aguardando</option></select></div>
         <p class="period-note" id="ecokioskPeriodNote" aria-live="polite">Carregando dados da planilha ECOKIOSK...</p>
       </section>
       <nav class="ecokiosk-view-tabs" id="ecokioskViewTabs" role="tablist" aria-label="Setores de produção ECOKIOSK">

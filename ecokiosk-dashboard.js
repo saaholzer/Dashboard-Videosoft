@@ -96,6 +96,13 @@
       }));
   }
 
+  function activeProcessCategory(row) {
+    const status = normalizeStatus(row.status);
+    return status.includes("aguardando") || status.includes("liberado para")
+      ? "waiting"
+      : "in-progress";
+  }
+
   function normalizeReworkRows(rows) {
     return rows
       .filter(row => normalize(row[1]) && parseDate(row[0]))
@@ -315,16 +322,30 @@
     const completed = rows.filter(row => row.archivedDate);
     const completedQuantity = completed.reduce((sum, row) => sum + row.quantity, 0);
     const subtitle = `${integerFormat(completedQuantity)} unidades finalizadas · ${integerFormat(completed.length)} registros`;
-    const activeRows = data.get(`active:${definition.key}`) ?? [];
+    const processStatus = document.querySelector("#ecokioskProcessStatusFilter").value;
+    const activeRows = (data.get(`active:${definition.key}`) ?? []).filter(row =>
+      processStatus === "all" || activeProcessCategory(row) === processStatus
+    );
     const activeQuantity = activeRows.reduce((sum, row) => sum + row.quantity, 0);
+    const processLabel = processStatus === "waiting"
+      ? "AGUARDANDO"
+      : processStatus === "in-progress"
+        ? "EM ANDAMENTO"
+        : "ATIVOS";
     const charts = [
       chartPanel(
-        "PROCESSOS EM ANDAMENTO",
+        `PROCESSOS ${processLabel}`,
         `${integerFormat(activeQuantity)} unidades em ${integerFormat(activeRows.length)} processos na aba ${definition.activeSheet}.`,
         groupQuantity(activeRows, row => row.status),
         { scrollable: true }
       ),
-      chartPanel("MODELOS E QUANTIDADES EM ANDAMENTO", "Soma da coluna QTD por modelo/estrutura dos processos ativos.", groupQuantity(activeRows, row => row.model, "structure"), { scrollable: true }), chartPanel(
+      chartPanel(
+        `MODELOS E QUANTIDADES ${processLabel}`,
+        "Soma da coluna QTD por modelo/estrutura dos processos selecionados.",
+        groupQuantity(activeRows, row => row.model, "structure"),
+        { scrollable: true }
+      ),
+      chartPanel(
         "QUANTIDADE CONCLUÍDA POR MÊS",
         `${definition.name} · agrupado pelo mês de ARQUIVADO EM. ${subtitle}.`,
         monthlyQuantity(completed, row => row.archivedDate, row => row.quantity, "registros finalizados", "registro finalizado"),
@@ -409,6 +430,7 @@
     const overview = view === "overview";
     const rework = view === reworkDefinition.key;
     document.querySelector("#ecokioskStatusFilterContainer").hidden = !overview;
+    document.querySelector("#ecokioskProcessStatusFilterContainer").hidden = overview || rework;
     document.querySelector("#ecokiosk-view-overview").hidden = !overview;
     for (const definition of sectorDefinitions) {
       document.querySelector(`#ecokiosk-view-${definition.key}`).hidden = view !== definition.key;
@@ -507,6 +529,7 @@
   document.querySelector("#ecokioskYearFilter").addEventListener("change", render);
   document.querySelector("#ecokioskMonthFilter").addEventListener("change", render);
   document.querySelector("#ecokioskStatusFilter").addEventListener("change", render);
+  document.querySelector("#ecokioskProcessStatusFilter").addEventListener("change", render);
   document.querySelector("#ecokioskViewTabs").addEventListener("click", event => {
     const tab = event.target.closest(".ecokiosk-view-tab");
     if (tab) selectView(tab.dataset.ecokioskView);
