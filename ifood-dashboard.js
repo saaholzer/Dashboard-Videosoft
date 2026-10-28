@@ -15,6 +15,7 @@
     shipmentCompletion: "ifoodShipmentCompletionFilter"
   };
   const normalize = value => String(value ?? "").trim();
+  const normalizeCnpj = value => normalize(value).replace(/[.\/\s-]/g, "").toUpperCase();
   const normalizeKey = value => normalize(value).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
   const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, character => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
@@ -66,6 +67,8 @@
     const serials = normalize(row["Num Série do Totem"]).split(/[,;\r\n]+/).map(serial => serial.trim()).filter(Boolean);
     const quantity = parseQuantity(row.Quantidade);
     return {
+      cnpj: normalize(columnValue(row, "CNPJ")),
+      tradeName: normalize(columnValue(row, "Nome Fantasia")),
       order: normalize(row.Pedido) || "Pedido não informado",
       entryDate,
       plannedDepartureDate,
@@ -146,6 +149,7 @@
   }
 
   function selectedRows(ignoreBrand = false) {
+    const cnpj = normalizeCnpj(document.querySelector("#ifoodCnpjFilter").value);
     const year = document.querySelector("#ifoodYearFilter").value;
     const brand = document.querySelector("#ifoodBrandFilter").value;
     const transaction = document.querySelector("#ifoodTransactionFilter").value;
@@ -157,6 +161,7 @@
     return records.filter(row =>
       (year === "all" || String(row.entryDate?.year) === year) &&
       (ignoreBrand || brand === "all" || row.brand === brand) &&
+      (!cnpj || normalizeCnpj(row.cnpj).includes(cnpj)) &&
       (transaction === "all" || normalizeKey(row.transaction) === transaction) &&
       (status === "all" || normalizeKey(row.status) === status) &&
       (model === "all" || row.model === model) &&
@@ -378,12 +383,22 @@
   }
 
   function orderLookupTable(rows) {
-    const tableRows = rows.map(row => {
-      const newDepartureDate = parseDate(row.newDepartureDate);
-      return `<tr><td>${escapeHtml(row.order)}</td><td>${escapeHtml(row.brand)}</td><td>${escapeHtml(row.model)}</td><td>${integer.format(row.quantity)}</td><td>${escapeHtml(formatDate(row.plannedDepartureDate) || "—")}</td><td>${escapeHtml(formatDate(row.plannedDeliveryDate) || "—")}</td><td>${escapeHtml(formatDate(newDepartureDate) || row.newDepartureDate || "—")}</td></tr>`;
+    const orders = rows.map(row => ({
+      row,
+      newDepartureDate: row.departureDate ? null : parseDate(row.newDepartureDate)
+    })).sort((a, b) => {
+      const first = a.newDepartureDate?.timestamp;
+      const second = b.newDepartureDate?.timestamp;
+      if (first == null) return second == null ? 0 : 1;
+      if (second == null) return -1;
+      return first - second;
+    });
+    const tableRows = orders.map(({ row, newDepartureDate }) => {
+      const newDepartureLabel = row.departureDate ? "-" : formatDate(newDepartureDate) || row.newDepartureDate || "-";
+      return `<tr><td>${escapeHtml(row.order)}</td><td>${escapeHtml(row.tradeName || "—")}</td><td>${escapeHtml(row.cnpj || "—")}</td><td>${escapeHtml(row.brand)}</td><td>${escapeHtml(row.model)}</td><td>${integer.format(row.quantity)}</td><td>${escapeHtml(formatDate(row.plannedDepartureDate) || "—")}</td><td>${escapeHtml(formatDate(row.plannedDeliveryDate) || "—")}</td><td>${escapeHtml(newDepartureLabel)}</td></tr>`;
     }).join("");
     const subtitle = `${integer.format(rows.length)} pedidos no recorte selecionado.`;
-    return `<article class="panel"><div class="panel-head"><div><h2 class="panel-title">Consulta de pedidos</h2><p class="panel-subtitle">${escapeHtml(subtitle)}</p></div></div><div class="ifood-order-table-wrap"><table class="ifood-order-table"><thead><tr><th scope="col">Pedido</th><th scope="col">Marca</th><th scope="col">Modelo</th><th scope="col">Qtd.</th><th scope="col">Data prevista de saída</th><th scope="col">Data prevista de entrega</th><th scope="col">Nova data de envio</th></tr></thead><tbody>${tableRows}</tbody></table></div></article>`;
+    return `<article class="panel"><div class="panel-head"><div><h2 class="panel-title">Consulta de pedidos</h2><p class="panel-subtitle">${escapeHtml(subtitle)}</p></div></div><div class="ifood-order-table-wrap"><table class="ifood-order-table"><thead><tr><th scope="col">Pedido</th><th scope="col">Nome fantasia</th><th scope="col">CNPJ</th><th scope="col">Marca</th><th scope="col">Modelo</th><th scope="col">Qtd.</th><th scope="col">Data prevista de saída</th><th scope="col">Data prevista de entrega</th><th scope="col">Nova data de envio</th></tr></thead><tbody>${tableRows}</tbody></table></div></article>`;
   }
 
   function orderTables(rows) {
@@ -418,6 +433,8 @@
       const select = document.querySelector(`#${id}`);
       return select.value === "all" ? [] : [`${label}: ${select.selectedOptions[0].textContent}`];
     });
+    const cnpjSearch = normalize(document.querySelector("#ifoodCnpjFilter").value);
+    if (normalizeCnpj(cnpjSearch)) activeFilters.push(`CNPJ: ${cnpjSearch}`);
     for (const [type, value] of chartFilters) {
       const label = type === "entryPeriod" ? "Mês de entrada"
         : type === "departurePeriod" ? "Mês de envio"
@@ -504,6 +521,7 @@
     }
   }
 
+  document.querySelector("#ifoodCnpjFilter").addEventListener("input", render);
   document.querySelector("#ifoodYearFilter").addEventListener("change", render);
   document.querySelector("#ifoodBrandFilter").addEventListener("change", render);
   document.querySelector("#ifoodTransactionFilter").addEventListener("change", render);
@@ -514,9 +532,15 @@
   document.querySelector("#ifoodShipmentCompletionFilter").addEventListener("change", render);
   document.querySelector("#ifoodCharts").addEventListener("click", event => {
     const chartItem = event.target.closest("[data-chart-filter]");
-    if (chartItem) applyChartFilter(chartItem.dataset.chartFilter, chartItem.dataset.filterValue);
+    if (chartItem) {
+      applyChartFilter(chartItem.dataset.chartFilter, chartItem.dataset.filterValue);
+      const replacement = [...document.querySelectorAll("#ifoodCharts [data-chart-filter]")].find(item =>
+        item.dataset.chartFilter === chartItem.dataset.chartFilter && item.dataset.filterValue === chartItem.dataset.filterValue);
+      replacement?.focus({ preventScroll: true });
+    }
   });
   document.querySelector("#ifoodClearFilters").addEventListener("click", () => {
+    document.querySelector("#ifoodCnpjFilter").value = "";
     chartFilters.clear();
     for (const id of [
       "ifoodYearFilter",

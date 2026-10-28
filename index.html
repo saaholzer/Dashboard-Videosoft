@@ -56,13 +56,26 @@
     .dashboard-tab { flex: none; padding: 11px 16px; border: 0; border-bottom: 3px solid transparent; color: #68776e; background: transparent; cursor: pointer; font-size: 13px; font-weight: 700; white-space: nowrap; }
     .dashboard-tab[aria-selected="true"] { border-bottom-color: var(--lime); color: var(--forest); }
     .dashboard-tab:focus-visible, .refresh-button:focus-visible { outline: 3px solid #9ccd50; outline-offset: 2px; }
+    [data-cross-filter], [data-compare-year] { cursor: pointer; }
+    [data-compare-year]:focus-visible { outline: 2px solid var(--forest-2); outline-offset: 3px; }
+    [data-compare-year][aria-pressed="true"] { filter: drop-shadow(0 0 3px #245b49); }
+    [data-cross-filter]:hover { filter: brightness(.9); }
+    [data-cross-filter]:focus-visible { outline: 2px solid var(--forest-2); outline-offset: 3px; }
+    [data-cross-filter][aria-pressed="true"] { outline: 2px solid var(--forest-2); outline-offset: -2px; background-color: #e4efcf; }
+    svg [data-cross-filter][aria-pressed="true"] { filter: drop-shadow(0 0 3px #245b49); }
+    .chart-filter-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; flex-basis: 100%; color: var(--muted); font-size: 11px; }
+    .chart-filter-toolbar button { padding: 5px 8px; border: 1px solid #b6c9a4; border-radius: 4px; background: #edf5df; color: var(--forest); cursor: pointer; font: inherit; }
     .dashboard-panel[hidden] { display: none; }
+    .masthead { position: sticky; top: 0; z-index: 40; }
+    .dashboard-tabs { position: sticky; top: var(--masthead-height, 160px); z-index: 39; background: var(--paper); box-shadow: 0 -22px 0 var(--paper), 0 21px 0 var(--paper); }
+    .dashboard-panel .filters { position: sticky; top: calc(var(--masthead-height, 160px) + var(--dashboard-tabs-height, 44px) + 21px); z-index: 38; background: var(--paper); box-shadow: 0 8px 12px rgba(23, 51, 40, .06); max-height: max(120px, calc(100dvh - var(--masthead-height, 160px) - var(--dashboard-tabs-height, 44px) - 100px)); overflow-y: auto; }
     .filters { display: flex; align-items: end; flex-wrap: wrap; gap: 14px 24px; padding: 0 0 20px; border-bottom: 1px solid #dce1d8; }
     .filter { display: grid; gap: 6px; min-width: 170px; }
     .filter[hidden] { display: none; }
     .filter label { color: #53645b; font-size: 10px; font-weight: 700; letter-spacing: .9px; text-transform: uppercase; }
     .filter select { appearance: none; min-height: 40px; border: 1px solid #d6ddd4; border-radius: 3px; padding: 0 36px 0 12px; color: var(--ink); background: #fffefa; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='m1 1 5 5 5-5' fill='none' stroke='%2353645b' stroke-width='1.5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
-    .filter select:focus-visible, a:focus-visible { outline: 3px solid #9ccd50; outline-offset: 2px; }
+    .filter input { min-height: 40px; min-width: 0; border: 1px solid #d6ddd4; border-radius: 3px; padding: 0 12px; color: var(--ink); background: #fffefa; }
+    .filter select:focus-visible, .filter input:focus-visible, a:focus-visible { outline: 3px solid #9ccd50; outline-offset: 2px; }
     .period-note { align-self: center; margin: 0 0 2px auto; color: #65756c; font-size: 12px; }
     .period-note strong { color: var(--forest); font-weight: 700; }
 
@@ -210,17 +223,20 @@
     .ifood-recommissioned-table th { position: sticky; top: 0; z-index: 1; background: var(--surface); color: #718078; font-size: 10px; font-weight: 700; }
     .ifood-recommissioned-table th, .ifood-recommissioned-table td { padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; white-space: normal; overflow-wrap: anywhere; }
     .ifood-recommissioned-table td:nth-child(3) { font-variant-numeric: tabular-nums; }
-    .ifood-order-table-wrap { max-height: 420px; overflow-y: auto; padding: 0 10px 16px; }
-    .ifood-order-table { width: 100%; min-width: 0; max-width: 100%; table-layout: fixed; border-collapse: collapse; color: #53645b; font-size: 9px; text-align: left; }
+    .ifood-order-table-wrap { max-height: 420px; overflow: auto; padding: 0 10px 16px; }
+    .ifood-order-table { width: 100%; min-width: 1000px; table-layout: fixed; border-collapse: collapse; color: #53645b; font-size: 9px; text-align: left; }
     .ifood-order-table th, .ifood-order-table td { padding: 7px 4px; border-bottom: 1px solid var(--line); vertical-align: top; white-space: normal; overflow-wrap: anywhere; }
     .ifood-order-table th { position: sticky; top: 0; z-index: 1; background: var(--surface); color: #718078; font-size: 9px; font-weight: 700; }
-    .ifood-order-table th:nth-child(1), .ifood-order-table td:nth-child(1) { width: 12%; }
-    .ifood-order-table th:nth-child(2), .ifood-order-table td:nth-child(2) { width: 15%; }
+    .ifood-order-table th:nth-child(1), .ifood-order-table td:nth-child(1) { width: 7%; }
+    .ifood-order-table th:nth-child(2), .ifood-order-table td:nth-child(2) { width: 17%; }
     .ifood-order-table th:nth-child(3), .ifood-order-table td:nth-child(3) { width: 14%; }
-    .ifood-order-table th:nth-child(4), .ifood-order-table td:nth-child(4) { width: 7%; }
-    .ifood-order-table th:nth-child(5), .ifood-order-table td:nth-child(5),
-    .ifood-order-table th:nth-child(6), .ifood-order-table td:nth-child(6),
-    .ifood-order-table th:nth-child(7), .ifood-order-table td:nth-child(7) { width: 17.3%; }
+    .ifood-order-table th:nth-child(3), .ifood-order-table td:nth-child(3) { white-space: nowrap; }
+    .ifood-order-table th:nth-child(4), .ifood-order-table td:nth-child(4) { width: 10%; }
+    .ifood-order-table th:nth-child(5), .ifood-order-table td:nth-child(5) { width: 15%; }
+    .ifood-order-table th:nth-child(6), .ifood-order-table td:nth-child(6) { width: 4%; }
+    .ifood-order-table th:nth-child(7), .ifood-order-table td:nth-child(7),
+    .ifood-order-table th:nth-child(8), .ifood-order-table td:nth-child(8),
+    .ifood-order-table th:nth-child(9), .ifood-order-table td:nth-child(9) { width: 11%; }
     .ifood-load-error { padding: 24px; color: #a43f35; font-size: 13px; }
     .ecokiosk-data-note { margin: 14px 0 0; padding: 14px 18px; border-left: 3px solid var(--gold); background: #f7f6ef; color: #65736b; font-size: 11px; line-height: 1.6; }
     .ecokiosk-load-error { padding: 24px; color: #a43f35; font-size: 13px; }
@@ -679,6 +695,7 @@
 
     <section class="dashboard-panel" id="panel-ifood" role="tabpanel" aria-labelledby="tab-ifood" hidden>
       <section class="filters ifood-filters" aria-label="Filtros da operação IFOOD">
+        <div class="filter"><label for="ifoodCnpjFilter">Pesquisar por CNPJ</label><input id="ifoodCnpjFilter" type="search" placeholder="Digite o CNPJ completo ou parte dele" autocomplete="off"></div>
         <div class="filter"><label for="ifoodYearFilter">Ano de entrada</label><select id="ifoodYearFilter"><option value="all">Todos os anos</option></select></div>
         <div class="filter"><label for="ifoodBrandFilter">Marca</label><select id="ifoodBrandFilter"><option value="all">Todas as marcas</option></select></div>
         <div class="filter"><label for="ifoodTransactionFilter">Transação</label><select id="ifoodTransactionFilter"><option value="all">Todas as transações</option></select></div>
@@ -738,7 +755,11 @@
   <script type="module" src="./wow-dashboard.js"></script>
   <script type="module" src="./ifood-dashboard.js"></script>
   <script type="module" src="./ecokiosk-dashboard.js"></script>
-  <script>
+  <script type="module">
+    import { createChartFilters } from "./chart-filters.js";
+    const productionCharts = createChartFilters("#panel-production", renderProduction);
+    const logisticsCharts = createChartFilters("#panel-logistics", () => { logisticsPage = 0; renderLogistics(); });
+    const dreCharts = createChartFilters("#wow-view-dre", renderWowDashboard, "#wowDreFilters");
     const MONTHS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
     const MONTH_KEYS = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
     const PERIOD_MONTHS = {
@@ -923,6 +944,13 @@
         : `Visualizando <strong>${years[0]}</strong>${period !== "all" ? ` · ${PERIOD_LABELS[period]}` : years[0] === 2026 ? latest2026Note : " · ano completo"}`;
     }
 
+    function compareChartAttrs(year, month = null, realization = null) {
+      const selected = document.querySelector("#yearFilter").value === String(year) &&
+        (month === null || document.querySelector("#monthFilter").value === String(month)) &&
+        (realization === null || document.querySelector("#realizationFilter").value === realization);
+      return `data-compare-year="${year}" ${month === null ? "" : `data-compare-month="${month}"`} ${realization === null ? "" : `data-compare-realization="${realization}"`} role="button" tabindex="0" aria-pressed="${selected}" aria-label="Filtrar: ${year}${month === null ? "" : " · " + MONTHS[month]}"`;
+    }
+
     function svgBars(rows, years, metric) {
       const labels = comparisonMonths(currentMonth(), currentType());
       const available = labels.flatMap(month => years.flatMap(year => rows.filter(row => row.year === year && row.month === month)));
@@ -955,12 +983,12 @@
           const labelX = x + barWidth / 2 + (paired ? row.year === 2025 ? -3 : -13 : 0);
           const labelAnchor = paired ? row.year === 2025 ? "end" : "start" : "middle";
           const labelClass = `${metric === "revenue" ? "bar-label revenue-label" : "bar-label"}${isProjected(row) ? " projected-label" : ""}`;
-          return `<g><title>${tooltip}</title><rect x="${x}" y="${y}" width="${barWidth}" height="${barHeight}" rx="2" fill="${chartColor(row)}"/><text class="${labelClass}" x="${labelX}" y="${Math.max(13, y - 6)}" text-anchor="${labelAnchor}">${label}</text></g>`;
+          return `<g ${compareChartAttrs(row.year, row.month)}><title>${tooltip}</title><rect x="${x}" y="${y}" width="${barWidth}" height="${barHeight}" rx="2" fill="${chartColor(row)}"/><text class="${labelClass}" x="${labelX}" y="${Math.max(13, y - 6)}" text-anchor="${labelAnchor}">${label}</text></g>`;
         }).join("");
         const projectedMonth = years.includes(2026) && isProjected({ year: 2026, month });
         return `${rects}<text class="month-label${projectedMonth ? " projected-label" : ""}" x="${center}" y="${height - 15}" text-anchor="middle">${MONTHS[month]}</text>`;
       }).join("");
-      return `<svg class="chart-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="${metric === "revenue" ? "Faturamento" : "Totens movimentados"} por mês">${grid}${bars}</svg>`;
+      return `<svg class="chart-svg" viewBox="0 0 ${width} ${height}" role="group" aria-label="${metric === "revenue" ? "Faturamento" : "Totens movimentados"} por mês">${grid}${bars}</svg>`;
     }
 
     function renderRevenue(years, month, type) {
@@ -998,13 +1026,13 @@
       let offset = 0;
       const segments = annualTotals.flatMap(row => row.year === 2026
         ? [
-          { value: row.realizedValue, color: COLORS[2026] },
-          { value: row.projectedValue, color: COLORS.projected }
+          { year: row.year, realization: "realized", value: row.realizedValue, color: COLORS[2026] },
+          { year: row.year, realization: "projected", value: row.projectedValue, color: COLORS.projected }
         ].filter(segment => segment.value > 0)
-        : [{ value: row.value, color: COLORS[row.year] }].filter(segment => segment.value > 0));
+        : [{ year: row.year, realization: null, value: row.value, color: COLORS[row.year] }].filter(segment => segment.value > 0));
       const rings = segments.map(segment => {
         const length = circumference * segment.value / total;
-        const ring = `<circle cx="110" cy="110" r="68" fill="none" stroke="${segment.color}" stroke-width="23" stroke-dasharray="${length} ${circumference - length}" stroke-dashoffset="${-offset}" transform="rotate(-90 110 110)"/>`;
+        const ring = `<circle ${compareChartAttrs(segment.year, null, segment.realization)} cx="110" cy="110" r="68" fill="none" stroke="${segment.color}" stroke-width="23" stroke-dasharray="${length} ${circumference - length}" stroke-dashoffset="${-offset}" transform="rotate(-90 110 110)"/>`;
         offset += length;
         return ring;
       }).join("");
@@ -1018,11 +1046,11 @@
       const legend = legendRows.map(row => {
         const value = row.available ? displayMoney(row.value) : "Sem total oficial";
         const share = row.available ? `${Math.round(row.value / total * 100)}% do total considerado` : "Sem valor consolidado neste período";
-        return `<div class="mix-row"><span class="legend-dot" style="background:${row.color}"></span><span class="name">${row.label}</span><strong>${value}</strong><small>${share}</small></div>`;
+        return `<div class="mix-row" ${compareChartAttrs(row.year, null, row.label.includes("projetado") ? "projected" : row.label.includes("realizado") ? "realized" : null)}><span class="legend-dot" style="background:${row.color}"></span><span class="name">${row.label}</span><strong>${value}</strong><small>${share}</small></div>`;
       }).join("");
       const description = annualTotals.map(row => `${row.year}: ${row.available ? displayMoney(row.value) : "sem total oficial"}${row.year === 2026 && row.projectedValue > 0 ? `, incluindo ${displayMoney(row.projectedValue)} projetados` : ""}`).join(", ");
       document.querySelector("#mixChart").innerHTML = `
-        <svg class="donut" viewBox="0 0 220 220" role="img" aria-label="Faturamento total por ano: ${description}">
+        <svg class="donut" viewBox="0 0 220 220" role="group" aria-label="Faturamento total por ano: ${description}">
           <circle cx="110" cy="110" r="68" fill="none" stroke="#edf0e9" stroke-width="23"/>
           ${rings}
           <text class="donut-total" x="110" y="106">${total >= 1000000 ? `${shortMoney(total)} mi` : displayMoney(total)}</text><text class="donut-caption" x="110" y="125">total consolidado</text>
@@ -1082,7 +1110,7 @@
         const barTop = top + plotHeight - barHeight;
         const label = `${shortMoney(point.rent)} mi`;
         const projectedLabel = isProjected(point) ? " · Projetado" : "";
-        return `<g><title>${point.year} · ${MONTHS[point.month]}${projectedLabel} · Recorrência ${displayMoney(point.rent)}</title><rect x="${point.x - barWidth / 2}" y="${barTop}" width="${barWidth}" height="${barHeight}" rx="2" fill="${color}" opacity=".72"/><text class="active-chart-data-label active-revenue-label${isProjected(point) ? " projected-label" : ""}" x="${point.x}" y="${barTop - 5}" text-anchor="middle">${label}</text></g>`;
+        return `<g ${compareChartAttrs(point.year, point.month)}><title>${point.year} · ${MONTHS[point.month]}${projectedLabel} · Recorrência ${displayMoney(point.rent)}</title><rect x="${point.x - barWidth / 2}" y="${barTop}" width="${barWidth}" height="${barHeight}" rx="2" fill="${color}" opacity=".72"/><text class="active-chart-data-label active-revenue-label${isProjected(point) ? " projected-label" : ""}" x="${point.x}" y="${barTop - 5}" text-anchor="middle">${label}</text></g>`;
       }).join("");
       const lines = years.map(year => {
         const points = positions.filter(point => point.year === year && point.activeY != null);
@@ -1099,10 +1127,10 @@
           point.rent == null ? "" : `recorrência ${displayMoney(point.rent)}`
         ].filter(Boolean).join(" · ");
         const projectedLabel = isProjected(point) ? " · Projetado" : "";
-        return `<g><title>${point.year} · ${MONTHS[point.month]}${projectedLabel} · ${description}</title>${activeMark}<text class="active-month-label${isProjected(point) ? " projected-label" : ""}" x="${point.x}" y="${height - 18}" text-anchor="middle">${monthLabel}</text></g>`;
+        return `<g ${compareChartAttrs(point.year, point.month)}><title>${point.year} · ${MONTHS[point.month]}${projectedLabel} · ${description}</title>${activeMark}<text class="active-month-label${isProjected(point) ? " projected-label" : ""}" x="${point.x}" y="${height - 18}" text-anchor="middle">${monthLabel}</text></g>`;
       }).join("");
       const range = `${MONTHS[rows[0].month]}/${rows[0].year} a ${MONTHS[rows.at(-1).month]}/${rows.at(-1).year}`;
-      document.querySelector("#activeChart").innerHTML = `<svg class="active-chart-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Recorrência mensal em reais como barras e quantidade de totens ativos como linhas: ${range}">${ticks}${bars}${lines}${marks}</svg>`;
+      document.querySelector("#activeChart").innerHTML = `<svg class="active-chart-svg" viewBox="0 0 ${width} ${height}" role="group" aria-label="Recorrência mensal em reais como barras e quantidade de totens ativos como linhas: ${range}">${ticks}${bars}${lines}${marks}</svg>`;
     }
 
     function renderTable(years, month, type) {
@@ -1329,8 +1357,9 @@
         return;
       }
 
+      dreCharts.begin();
       const selectedMonth = document.querySelector("#wowDreMonthFilter").value;
-      const selectedMonths = wow.months.filter(row => selectedMonth === "all" || row.month === Number(selectedMonth));
+      const selectedMonths = dreCharts.filter(wow.months).filter(row => selectedMonth === "all" || row.month === Number(selectedMonth));
       const totemMonths = selectedMonths.filter(row => row.units != null || row.costPerTotem != null);
       const sumField = (rows, field) => rows.reduce((total, row) => total + (row[field] ?? 0), 0);
       const comparableMonths = selectedMonths.filter(row => row.profit != null);
@@ -1362,6 +1391,7 @@
       renderWowCategoryTable(wow.revenueItems, comparableMonths, "revenue", "Não há meses com receitas e despesas para este filtro.");
       renderWowCategoryTable(wow.expenses, comparableMonths, "expenses", "Não há meses com receitas e despesas para este filtro.");
       renderWowTotemTable(totemMonths);
+      dreCharts.finish();
     }
 
     function renderWowCategoryTable(items, months, container, emptyMessage) {
@@ -1390,7 +1420,7 @@
         return;
       }
       const body = rows.map(row =>
-        `<tr><td>${MONTHS[row.month]}</td><td>${row.units == null ? "—" : integer(row.units)}</td><td>${row.costPerTotem == null ? "—" : displayMoney(row.costPerTotem)}</td></tr>`
+        `<tr ${dreCharts.attrs("Mês financeiro", MONTHS[row.month], item => item.month === row.month)}><td>${MONTHS[row.month]}</td><td>${row.units == null ? "—" : integer(row.units)}</td><td>${row.costPerTotem == null ? "—" : displayMoney(row.costPerTotem)}</td></tr>`
       ).join("");
       target.innerHTML = `<table><thead><tr><th>Mês</th><th>Totens com G.O.</th><th>Rateio por totem</th></tr></thead><tbody>${body}</tbody></table>`;
     }
@@ -1521,7 +1551,7 @@
       const shipmentMonth = document.querySelector("#productionShipmentMonthFilter").value;
       const shipmentStatus = document.querySelector("#productionShipmentStatusFilter").value;
       const orderSearch = document.querySelector("#productionOrderSearch").value.replace(/\D/g, "");
-      return PRODUCTION_DATA.filter(row =>
+      return productionCharts.filter(PRODUCTION_DATA).filter(row =>
         (transaction === "all" || row.transaction === transaction) &&
         (client === "all" || row.clientCategory === client) &&
         (model === "all" || row.model === model) &&
@@ -1593,11 +1623,11 @@
           minimumFractionDigits: 2,
           maximumFractionDigits: 2
         }).format(value);
-        const columns = `<g><title>${month} · ${displayMoney(value)} em vendas</title><rect x="${x}" y="${y}" width="${barWidth}" height="${barHeight}" rx="2" fill="${sentOnly ? "#25876b" : "#4387bf"}"/><text x="${left + barWidth + 7}" y="${center + 4}" text-anchor="start" style="font: 700 10px 'DM Sans', sans-serif; fill: #1c2924;">${label}</text></g>`;
+        const columns = `<g ${productionCharts.attrs(sentOnly ? "Mês de faturamento realizado" : "Mês de faturamento previsto", month, row => row[monthField] === index && row.transaction === "Venda" && (!sentOnly || row.sent))}><title>${month} · ${displayMoney(value)} em vendas</title><rect x="${x}" y="${y}" width="${barWidth}" height="${barHeight}" rx="2" fill="${sentOnly ? "#25876b" : "#4387bf"}"/><text x="${left + barWidth + 7}" y="${center + 4}" text-anchor="start" style="font: 700 10px 'DM Sans', sans-serif; fill: #1c2924;">${label}</text></g>`;
         return `${columns}<text class="month-label" x="${left - 8}" y="${center + 4}" text-anchor="end" style="font-size:11px">${month}</text>`;
       }).join("");
       const description = sentOnly ? "Faturamento realizado por mês de envio" : "Previsão inicial de faturamento por mês previsto";
-      target.innerHTML = `<svg class="production-revenue-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="${description}, somente transação Venda">${grid}${bars}</svg>`;
+      target.innerHTML = `<svg class="production-revenue-chart" viewBox="0 0 ${width} ${height}" role="group" aria-label="${description}, somente transação Venda">${grid}${bars}</svg>`;
     }
 
     function renderProductionShipmentChart(rows) {
@@ -1622,11 +1652,11 @@
         const x = center - barWidth / 2, y = top + plotHeight - barHeight;
         const textY = Math.max(y - 10, 20);
         const label = actual[index] ? `<text x="${center}" y="${textY}" text-anchor="middle" style="font: 700 18px 'DM Sans', sans-serif; fill: #1c2924;">${integer(actual[index])}</text>` : "";
-        const columns = `<g><title>${month} · Enviado: ${integer(actual[index])} terminais</title><rect x="${x}" y="${y}" width="${barWidth}" height="${barHeight}" rx="2" fill="#25876b"/>${label}</g>`;
+        const columns = `<g ${productionCharts.attrs("Mês de envio", month, row => row.sent && row.actualMonth === index)}><title>${month} · Enviado: ${integer(actual[index])} terminais</title><rect x="${x}" y="${y}" width="${barWidth}" height="${barHeight}" rx="2" fill="#25876b"/>${label}</g>`;
         return `${columns}<text class="month-label" x="${center}" y="${height - 14}" text-anchor="middle" style="font-size:14px">${month}</text>`;
       }).join("");
       const legend = `<div class="active-chart-legend"><span class="active-legend-item"><i class="active-legend-bar active-legend-2026"></i>Terminais enviados</span></div>`;
-      target.innerHTML = `${legend}<svg class="production-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Terminais enviados por mês de envio">${grid}${bars}</svg>`;
+      target.innerHTML = `${legend}<svg class="production-chart" viewBox="0 0 ${width} ${height}" role="group" aria-label="Terminais enviados por mês de envio">${grid}${bars}</svg>`;
     }
 
     function renderProductionStatus(rows) {
@@ -1641,7 +1671,7 @@
       }
       const maximum = sorted[0][1];
       target.innerHTML = sorted.map(([status, count]) =>
-        `<div class="production-status-row"><span>${escapeHtml(status)}</span><strong>${integer(count)}</strong><div class="production-status-track"><div class="production-status-fill" style="width:${count / maximum * 100}%"></div></div></div>`
+        `<div class="production-status-row" ${productionCharts.attrs("Status", status, row => row.status === status)}><span>${escapeHtml(status)}</span><strong>${integer(count)}</strong><div class="production-status-track"><div class="production-status-fill" style="width:${count / maximum * 100}%"></div></div></div>`
       ).join("");
     }
 
@@ -1658,7 +1688,7 @@
       const total = sorted.reduce((sum, [, count]) => sum + count, 0);
       const percentage = value => `${new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 1 }).format(value / total * 100)}%`;
       target.innerHTML = sorted.map(([status, count]) =>
-        `<div class="production-status-row"><span>${escapeHtml(status)}</span><strong>${integer(count)} · ${percentage(count)}</strong><div class="production-status-track"><div class="production-status-fill" style="width:${count / total * 100}%"></div></div></div>`
+        `<div class="production-status-row" ${productionCharts.attrs("Status da fábrica", status, row => row.factoryStatus === status)}><span>${escapeHtml(status)}</span><strong>${integer(count)} · ${percentage(count)}</strong><div class="production-status-track"><div class="production-status-fill" style="width:${count / total * 100}%"></div></div></div>`
       ).join("");
     }
 
@@ -1676,7 +1706,7 @@
         return;
       }
       const body = sorted.map(([model, summary]) =>
-        `<tr><td>${escapeHtml(model)}</td><td>${integer(summary.units)}</td><td>${integer(summary.sent)}</td></tr>`
+        `<tr ${productionCharts.attrs("Modelo", model, row => row.model === model)}><td>${escapeHtml(model)}</td><td>${integer(summary.units)}</td><td>${integer(summary.sent)}</td></tr>`
       ).join("");
       document.querySelector("#productionModelTable").innerHTML = `<table><thead><tr><th>Modelo</th><th>Terminais</th><th>Enviados</th></tr></thead><tbody>${body}</tbody></table>`;
     }
@@ -1698,7 +1728,7 @@
       const maximum = ranked[0][1];
       const percentage = value => `${new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 1 }).format(value / total * 100)}%`;
       target.innerHTML = ranked.slice(0, 20).map(([client, quantity]) =>
-        `<div class="production-client-chart-row" title="${escapeHtml(client)}: ${integer(quantity)} terminais (${percentage(quantity)})"><span class="production-client-chart-name">${escapeHtml(client)}</span><div class="production-client-chart-track" role="img" aria-label="${escapeHtml(client)}: ${integer(quantity)} terminais, ${percentage(quantity)}"><div class="production-client-chart-bar" style="width:${quantity / maximum * 100}%"></div></div><strong class="production-client-chart-value">${integer(quantity)}</strong><span class="production-client-chart-share">${percentage(quantity)}</span></div>`
+        `<div class="production-client-chart-row" ${productionCharts.attrs("Cliente", client, row => row.clientCategory === client)} title="${escapeHtml(client)}: ${integer(quantity)} terminais (${percentage(quantity)})"><span class="production-client-chart-name">${escapeHtml(client)}</span><div class="production-client-chart-track" role="group" aria-label="${escapeHtml(client)}: ${integer(quantity)} terminais, ${percentage(quantity)}"><div class="production-client-chart-bar" style="width:${quantity / maximum * 100}%"></div></div><strong class="production-client-chart-value">${integer(quantity)}</strong><span class="production-client-chart-share">${percentage(quantity)}</span></div>`
       ).join("");
     }
 
@@ -1725,6 +1755,7 @@
     }
 
     function renderProduction() {
+      productionCharts.begin();
       const rows = filteredProductionRows();
       renderProductionKpis(rows);
       renderProductionRevenueChart(rows, "billingForecastMonth", false, "productionForecastRevenueChart", "productionForecastRevenueTotal");
@@ -1735,6 +1766,7 @@
       renderProductionModelTable(rows);
       renderProductionClientChart(rows);
       renderProductionOrdersTable(rows);
+      productionCharts.finish();
     }
 
     const LOGISTICS_SHEET_PAGE_URL = "https://docs.google.com/spreadsheets/d/1bxaHPdoml_TuikbRAQfCsL3EuJdftp3QRmMSnTgW9Eo/edit?gid=534405796#gid=534405796";
@@ -1794,7 +1826,7 @@
     function filteredLogisticsRows() {
       const [year, month, carrier, type, state, status, department, material, seller] = logisticsFilterIds.map(id => document.getElementById(id).value);
       const search = normalizeLogisticsText(document.getElementById("logisticsSearch").value);
-      return (LOGISTICS_DATA ?? []).filter(row =>
+      return logisticsCharts.filter(LOGISTICS_DATA ?? []).filter(row =>
         (year === "all" || row.sentDate?.year === Number(year)) &&
         (month === "all" || row.sentDate?.month === Number(month)) &&
         (carrier === "all" || row.carrier === carrier) && (type === "all" || row.type === type) &&
@@ -1815,7 +1847,7 @@
       const groups = new Map();
       for (const row of dated) {
         const key = `${row.sentDate.year}-${String(row.sentDate.month + 1).padStart(2, "0")}`;
-        const group = groups.get(key) ?? { label: `${MONTHS[row.sentDate.month]}/${row.sentDate.year}`, value: 0, known: 0 };
+        const group = groups.get(key) ?? { label: `${MONTHS[row.sentDate.month]}/${row.sentDate.year}`, year: row.sentDate.year, month: row.sentDate.month, value: 0, known: 0 };
         group.value += cost ? row.freight ?? 0 : 1;
         group.known += cost ? Number(row.freight != null) : 1;
         groups.set(key, group);
@@ -1823,10 +1855,10 @@
       const monthly = [...groups].sort(([a], [b]) => a.localeCompare(b)).map(([, value]) => value);
       const max = Math.max(...monthly.map(group => group.value), 1);
       const height = Math.max(250, monthly.length * 27 + 20);
-      target.innerHTML = `<svg class="chart-svg" viewBox="0 0 650 ${height}" role="img" aria-label="${cost ? "Custo de frete" : "Operações"} por mês">${monthly.map((group, index) => {
+      target.innerHTML = `<svg class="chart-svg" viewBox="0 0 650 ${height}" role="group" aria-label="${cost ? "Custo de frete" : "Operações"} por mês">${monthly.map((group, index) => {
         const y = 15 + index * (height - 20) / monthly.length;
         const label = group.known ? cost ? displayMoney(group.value) : integer(group.value) : "Sem valor";
-        return `<g><title>${group.label}: ${label}</title><text class="month-label" x="70" y="${y + 12}" text-anchor="end">${group.label}</text><rect x="82" y="${y}" width="${Math.max(0, group.value) / max * 410}" height="17" rx="2" fill="${cost ? "#4387bf" : "#25876b"}"/><text class="bar-label" x="${90 + Math.max(0, group.value) / max * 410}" y="${y + 12}">${label}</text></g>`;
+        return `<g ${logisticsCharts.attrs("Mês de envio", group.label, row => row.sentDate?.year === group.year && row.sentDate?.month === group.month)}><title>${group.label}: ${label}</title><text class="month-label" x="70" y="${y + 12}" text-anchor="end">${group.label}</text><rect x="82" y="${y}" width="${Math.max(0, group.value) / max * 410}" height="17" rx="2" fill="${cost ? "#4387bf" : "#25876b"}"/><text class="bar-label" x="${90 + Math.max(0, group.value) / max * 410}" y="${y + 12}">${label}</text></g>`;
       }).join("")}</svg>`;
     }
 
@@ -1837,10 +1869,11 @@
       const total = sentRows.reduce((sum, row) => sum + row.quantity, 0);
       const sorted = [...groups].sort((a, b) => b[1] - a[1]);
       const maximum = Math.max(...sorted.map(([, quantity]) => quantity), 1);
-      document.getElementById(targetId).innerHTML = sorted.map(([label, quantity]) => `<div class="logistics-volume-row"><span>${escapeHtml(label)}</span><strong>${integer(quantity)}</strong><small>${total ? (quantity / total * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 }) : "0"}%</small><div class="production-status-track"><div class="production-status-fill" style="width:${Math.max(0, quantity) / maximum * 100}%"></div></div></div>`).join("") || '<p class="production-status-empty">Sem volumes enviados neste recorte.</p>';
+      document.getElementById(targetId).innerHTML = sorted.map(([label, quantity]) => `<div class="logistics-volume-row" ${logisticsCharts.attrs(({ department: "Departamento", material: "Material", seller: "Vendedor" })[field], label, row => row[field] === label)}><span>${escapeHtml(label)}</span><strong>${integer(quantity)}</strong><small>${total ? (quantity / total * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 }) : "0"}%</small><div class="production-status-track"><div class="production-status-fill" style="width:${Math.max(0, quantity) / maximum * 100}%"></div></div></div>`).join("") || '<p class="production-status-empty">Sem volumes enviados neste recorte.</p>';
     }
 
     function renderLogistics() {
+      logisticsCharts.begin();
       const rows = filteredLogisticsRows();
       const ready = LOGISTICS_DATA != null;
       const freightRows = rows.filter(row => row.freight != null);
@@ -1865,10 +1898,10 @@
       renderLogisticsVolumes(rows, "seller", "logisticsSellerChart");
       const carriers = new Map();
       for (const row of rows) { if (!carriers.has(row.carrier)) carriers.set(row.carrier, []); carriers.get(row.carrier).push(row); }
-      document.getElementById("logisticsCarrierTable").innerHTML = `<table><thead><tr><th>Transportadora</th><th>Operações</th><th>Frete</th><th>No prazo</th><th>OTIF</th></tr></thead><tbody>${[...carriers].sort((a, b) => b[1].length - a[1].length).map(([carrier, items]) => `<tr><td>${escapeHtml(carrier)}</td><td>${integer(items.length)}</td><td>${items.some(row => row.freight != null) ? displayMoney(items.reduce((total, row) => total + (row.freight ?? 0), 0)) : "—"}</td><td>${logisticsRate(items, "onTime").label}</td><td>${logisticsRate(items, "otif").label}</td></tr>`).join("") || '<tr><td colspan="5">Sem operações neste recorte.</td></tr>'}</tbody></table>`;
+      document.getElementById("logisticsCarrierTable").innerHTML = `<table><thead><tr><th>Transportadora</th><th>Operações</th><th>Frete</th><th>No prazo</th><th>OTIF</th></tr></thead><tbody>${[...carriers].sort((a, b) => b[1].length - a[1].length).map(([carrier, items]) => `<tr ${logisticsCharts.attrs("Transportadora", carrier, row => row.carrier === carrier)}><td>${escapeHtml(carrier)}</td><td>${integer(items.length)}</td><td>${items.some(row => row.freight != null) ? displayMoney(items.reduce((total, row) => total + (row.freight ?? 0), 0)) : "—"}</td><td>${logisticsRate(items, "onTime").label}</td><td>${logisticsRate(items, "otif").label}</td></tr>`).join("") || '<tr><td colspan="5">Sem operações neste recorte.</td></tr>'}</tbody></table>`;
       const statuses = new Map();
       for (const row of rows) statuses.set(row.status, (statuses.get(row.status) ?? 0) + 1);
-      document.getElementById("logisticsStatusChart").innerHTML = [...statuses].sort((a, b) => b[1] - a[1]).map(([status, count]) => `<div class="production-status-row"><span>${escapeHtml(status)}</span><strong>${integer(count)}</strong><div class="production-status-track"><div class="production-status-fill" style="width:${count / rows.length * 100}%"></div></div></div>`).join("") || '<p class="production-status-empty">Sem operações neste recorte.</p>';
+      document.getElementById("logisticsStatusChart").innerHTML = [...statuses].sort((a, b) => b[1] - a[1]).map(([status, count]) => `<div class="production-status-row" ${logisticsCharts.attrs("Status", status, row => row.status === status)}><span>${escapeHtml(status)}</span><strong>${integer(count)}</strong><div class="production-status-track"><div class="production-status-fill" style="width:${count / rows.length * 100}%"></div></div></div>`).join("") || '<p class="production-status-empty">Sem operações neste recorte.</p>';
       const sorted = [...rows].sort((a, b) => (b.sentDate?.sortValue ?? 0) - (a.sentDate?.sortValue ?? 0));
       const pages = Math.max(1, Math.ceil(rows.length / 50));
       logisticsPage = Math.max(0, Math.min(logisticsPage, pages - 1));
@@ -1878,6 +1911,7 @@
       document.getElementById("logisticsPage").textContent = `Página ${logisticsPage + 1} de ${pages}`;
       document.getElementById("logisticsPrevious").disabled = logisticsPage === 0;
       document.getElementById("logisticsNext").disabled = logisticsPage >= pages - 1;
+      logisticsCharts.finish();
     }
 
     async function refreshLogisticsFromSheet() {
@@ -2038,7 +2072,15 @@
       document.querySelector("#sourceLink").href = selectedDashboard.source;
       document.querySelector("#sourceLink").textContent = selectedDashboard.sourceLabel;
       document.title = `Dashboards Videosoft | ${selectedDashboard.pageTitle}`;
+
     }
+
+    const fixedHeaderObserver = new ResizeObserver(() => {
+      document.documentElement.style.setProperty("--masthead-height", `${document.querySelector(".masthead").getBoundingClientRect().height}px`);
+      document.documentElement.style.setProperty("--dashboard-tabs-height", `${document.querySelector(".dashboard-tabs").getBoundingClientRect().height}px`);
+    });
+    fixedHeaderObserver.observe(document.querySelector(".masthead"));
+    fixedHeaderObserver.observe(document.querySelector(".dashboard-tabs"));
 
     async function refreshActiveDashboard() {
       const button = document.querySelector("#refreshButton");
@@ -2086,6 +2128,27 @@
       }, nextMonth.getTime() - now.getTime());
     }
 
+    function filterComparisonChart(event) {
+      const target = event.target.closest("[data-compare-year]");
+      if (!target) return;
+      if (event.type === "keydown") {
+        if (!["Enter", " "].includes(event.key)) return;
+        event.preventDefault();
+      }
+      const remove = target.getAttribute("aria-pressed") === "true";
+      document.querySelector("#yearFilter").value = remove ? "all" : target.dataset.compareYear;
+      document.querySelector("#monthFilter").value = remove ? "all" : target.dataset.compareMonth ?? "all";
+      document.querySelector("#realizationFilter").value = remove ? "all" : target.dataset.compareRealization ?? "all";
+      document.querySelector("#periodFilter").value = "all";
+      render();
+      const replacement = [...document.querySelectorAll("#panel-compare [data-compare-year]")].find(item =>
+        item.dataset.compareYear === target.dataset.compareYear &&
+        item.dataset.compareMonth === target.dataset.compareMonth &&
+        item.dataset.compareRealization === target.dataset.compareRealization);
+      replacement?.focus({ preventScroll: true });
+    }
+    document.querySelector("#panel-compare").addEventListener("click", filterComparisonChart);
+    document.querySelector("#panel-compare").addEventListener("keydown", filterComparisonChart);
     document.querySelector("#yearFilter").addEventListener("change", render);
     document.querySelector("#monthFilter").addEventListener("change", () => {
       document.querySelector("#periodFilter").value = "all";

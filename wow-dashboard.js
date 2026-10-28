@@ -1,7 +1,9 @@
+import { createChartFilters } from "./chart-filters.js";
 (() => {
   const callsSheetCsvUrl = "https://docs.google.com/spreadsheets/d/1RGu5x3CXuAHpUF5fzdOy-njK6GWsDPW2gzmhjp-4No4/export?format=csv&gid=1184166301";
   const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
   const records = [];
+  const chartFilters = createChartFilters("#panel-wow", render, "#wowOperationsFilters");
   const filters = {
     year: "#wowYearFilter",
     month: "#wowMonthFilter",
@@ -117,7 +119,7 @@
 
   function selectedRows() {
     const selected = Object.fromEntries(Object.entries(filters).map(([key, selector]) => [key, document.querySelector(selector).value]));
-    return records.filter(row =>
+    return chartFilters.filter(records).filter(row =>
       (selected.year === "all" || String(row.opened.year) === selected.year) &&
       (selected.month === "all" || String(row.opened.month) === selected.month) &&
       (selected.service === "all" || row.service === selected.service) &&
@@ -132,7 +134,7 @@
       if (!key) continue;
       let item = groups.get(key);
       if (!item) {
-        item = { name: key, count: 0, sum: 0, rows: [] };
+        item = { name: key, count: 0, sum: 0, rows: [], test: row => keyOf(row) === key };
         groups.set(key, item);
       }
       item.count++;
@@ -152,7 +154,7 @@
   }
 
   function chartPanel(title, subtitle, content, id = "") {
-    return `<article class="panel"${id ? ` id="${escapeHtml(id)}"` : ""}><div class="panel-head"><div><h2 class="panel-title">${escapeHtml(title)}</h2><p class="panel-subtitle">${escapeHtml(subtitle)}</p></div></div>${content}</article>`;
+    return `<article class="panel" data-filter-scope="${escapeHtml(title)}"${id ? ` id="${escapeHtml(id)}"` : ""}><div class="panel-head"><div><h2 class="panel-title">${escapeHtml(title)}</h2><p class="panel-subtitle">${escapeHtml(subtitle)}</p></div></div>${content}</article>`;
   }
 
   function bars(items, { format = "count", maxRows = 10, tone = "", displayFormat = format, sortByCount = false, scrollable = false } = {}) {
@@ -165,12 +167,12 @@
       const width = Math.min(100, Math.max(1.5, item.value / maximum * 100));
       const detail = item.note ? `<span class="wow-chart-note">${escapeHtml(item.note)}</span>` : "";
       const displayValue = item.displayText ?? fmtValue(item.displayValue ?? item.value, displayFormat);
-      return `<div class="wow-chart-row" title="${escapeHtml(`${item.name}: ${displayValue}`)}"><div class="wow-chart-row-head"><span class="wow-chart-name">${escapeHtml(item.name)}</span><span class="wow-chart-value">${escapeHtml(displayValue)}</span></div><div class="wow-chart-track"><div class="wow-chart-fill ${tone}" style="width:${width.toFixed(1)}%"></div></div>${detail}</div>`;
+      return `<div class="wow-chart-row" ${chartFilters.attrs("", item.name, item.test)} title="${escapeHtml(`${item.name}: ${displayValue}`)}"><div class="wow-chart-row-head"><span class="wow-chart-name">${escapeHtml(item.name)}</span><span class="wow-chart-value">${escapeHtml(displayValue)}</span></div><div class="wow-chart-track"><div class="wow-chart-fill ${tone}" style="width:${width.toFixed(1)}%"></div></div>${detail}</div>`;
     }).join("")}</div>`;
   }
 
   function countBars(items, maxRows = 10) {
-    return bars(items.map(item => ({ name: item.name, value: item.count, note: item.note })), { maxRows });
+    return bars(items.map(item => ({ ...item, value: item.count })), { maxRows });
   }
 
   function monthlyChart(rows, valueOf, format, title = "Chamados por mês") {
@@ -181,15 +183,15 @@
     })).sort((a, b) => a.name.localeCompare(b.name));
     if (!values.length) return '<div class="wow-message">Não há datas de abertura no recorte.</div>';
     const maximum = Math.max(...values.map(item => item.value), 1);
-    return `<div class="wow-month-chart" role="img" aria-label="${escapeHtml(title)}">${values.map(item => {
+    return `<div class="wow-month-chart" role="group" aria-label="${escapeHtml(title)}">${values.map(item => {
       const [year, month] = item.name.split("-").map(Number);
       const height = Math.max(2, item.value / maximum * 100);
-      return `<div class="wow-month-item" title="${escapeHtml(`${monthNames[month - 1]}/${year}: ${fmtValue(item.value, format)}`)}"><span class="wow-month-value">${escapeHtml(fmtValue(item.value, format))}</span><div class="wow-month-track"><div class="wow-month-bar" style="height:${height.toFixed(1)}%"></div></div><span class="wow-month-label">${monthNames[month - 1]}/${String(year).slice(-2)}</span></div>`;
+      return `<div class="wow-month-item" ${chartFilters.attrs("Mês de abertura", `${monthNames[month - 1]}/${year}`, row => row.opened?.year === year && row.opened?.month === month - 1)} title="${escapeHtml(`${monthNames[month - 1]}/${year}: ${fmtValue(item.value, format)}`)}"><span class="wow-month-value">${escapeHtml(fmtValue(item.value, format))}</span><div class="wow-month-track"><div class="wow-month-bar" style="height:${height.toFixed(1)}%"></div></div><span class="wow-month-label">${monthNames[month - 1]}/${String(year).slice(-2)}</span></div>`;
     }).join("")}</div>`;
   }
 
   function groupedCount(rows, keyOf, maxRows = 10, options = {}) {
-    return bars(group(rows, keyOf).map(item => ({ name: item.name, value: item.count, note: item.note })), { maxRows, ...options });
+    return bars(group(rows, keyOf).map(item => ({ ...item, value: item.count })), { maxRows, ...options });
   }
 
   function slaRate(items, maxRows = 10, sortByCount = false) {
@@ -197,7 +199,7 @@
       const valid = item.rows.filter(row => row.sla === "Dentro prazo" || row.sla === "Fora prazo");
       const onTime = valid.filter(row => row.sla === "Dentro prazo").length;
       const rate = valid.length ? onTime / valid.length * 100 : 0;
-      return { name: item.name, count: item.count, value: rate, ratedCount: valid.length, note: `${integer.format(valid.length)} chamados com SLA · ${integer.format(onTime)} dentro do prazo` };
+      return { ...item, value: rate, ratedCount: valid.length, note: `${integer.format(valid.length)} chamados com SLA · ${integer.format(onTime)} dentro do prazo` };
     }).filter(item => item.ratedCount > 0);
     return bars(rated, { format: "percent", maxRows, tone: "", sortByCount });
   }
@@ -211,7 +213,7 @@
       { name: "Dentro do prazo", value: rated ? within / rated * 100 : 0, count: within, tone: "" },
       { name: "Fora do prazo", value: rated ? late / rated * 100 : 0, count: late, tone: "late" }
     ];
-    return `<div class="wow-chart-list">${items.map(item => `<div class="wow-chart-row"><div class="wow-chart-row-head"><span class="wow-chart-name">${item.name}</span><span class="wow-chart-value">${integer.format(item.count)} · ${number.format(item.value)}%</span></div><div class="wow-chart-track"><div class="wow-chart-fill ${item.tone}" style="width:${item.value.toFixed(1)}%"></div></div></div>`).join("")}<p class="wow-chart-note">SLA informado em ${integer.format(rated)} de ${integer.format(rows.length)} chamados · cumprimento de ${number.format(rate)}%.</p></div>`;
+    return `<div class="wow-chart-list">${items.map(item => `<div class="wow-chart-row" ${chartFilters.attrs("SLA", item.name, row => row.sla === (item.tone === "late" ? "Fora prazo" : "Dentro prazo"))}><div class="wow-chart-row-head"><span class="wow-chart-name">${item.name}</span><span class="wow-chart-value">${integer.format(item.count)} · ${number.format(item.value)}%</span></div><div class="wow-chart-track"><div class="wow-chart-fill ${item.tone}" style="width:${item.value.toFixed(1)}%"></div></div></div>`).join("")}<p class="wow-chart-note">SLA informado em ${integer.format(rated)} de ${integer.format(rows.length)} chamados · cumprimento de ${number.format(rate)}%.</p></div>`;
   }
 
   function statusChart(rows, openOnly = false) {
@@ -241,9 +243,9 @@
 
   function renderExecutive(rows) {
     const costs = [
-      { name: "Assistência", value: rows.reduce((sum, row) => sum + row.assistance, 0) },
-      { name: "Peças", value: rows.reduce((sum, row) => sum + row.parts, 0) },
-      { name: "Fretes", value: rows.reduce((sum, row) => sum + row.freight, 0) }
+      { name: "Assistência", test: row => row.assistance > 0, value: rows.reduce((sum, row) => sum + row.assistance, 0) },
+      { name: "Peças", test: row => row.parts > 0, value: rows.reduce((sum, row) => sum + row.parts, 0) },
+      { name: "Fretes", test: row => row.freight > 0, value: rows.reduce((sum, row) => sum + row.freight, 0) }
     ];
     document.querySelector(viewTargets.executive).innerHTML = `<div class="wow-chart-grid">
       ${chartPanel("Volume mensal de chamados", "Chamados agrupados pela data de abertura.", monthlyChart(rows, () => 1, "count"))}
@@ -260,7 +262,7 @@
         const within = rated.filter(row => row.sla === "Dentro prazo").length;
         const rate = rated.length ? within / rated.length * 100 : null;
         return {
-          name: client.name,
+          ...client,
           value: client.count,
           displayValue: rate ?? 0,
           displayText: rate == null ? "Sem SLA" : fmtValue(rate, "percent"),
@@ -285,14 +287,14 @@
 
   function renderFinance(rows) {
     const costBySupplier = group(rows.filter(row => row.supplier !== "Não informado"), row => row.supplier, row => row.totalCost)
-      .map(item => ({ name: item.name, value: item.sum, note: `${integer.format(item.count)} chamados` }));
+      .map(item => ({ ...item, value: item.sum, note: `${integer.format(item.count)} chamados` }));
     const costs = [
-      { name: "Assistência", value: rows.reduce((sum, row) => sum + row.assistance, 0) },
-      { name: "Peças", value: rows.reduce((sum, row) => sum + row.parts, 0) },
-      { name: "Frete", value: rows.reduce((sum, row) => sum + row.freight, 0) }
+      { name: "Assistência", test: row => row.assistance > 0, value: rows.reduce((sum, row) => sum + row.assistance, 0) },
+      { name: "Peças", test: row => row.parts > 0, value: rows.reduce((sum, row) => sum + row.parts, 0) },
+      { name: "Frete", test: row => row.freight > 0, value: rows.reduce((sum, row) => sum + row.freight, 0) }
     ];
     const byService = group(rows, row => row.service, row => row.totalCost).map(item => ({
-      name: item.name, value: item.sum, note: `${integer.format(item.count)} chamados`
+      ...item, value: item.sum, note: `${integer.format(item.count)} chamados`
     }));
     document.querySelector(viewTargets.finance).innerHTML = `<div class="wow-chart-grid">
       ${chartPanel("Custo total por mês", "Soma de assistência, peças e fretes por mês de abertura.", monthlyChart(rows, row => row.totalCost, "money"))}
@@ -314,11 +316,11 @@
       .filter(item => item.count > 1)
       .flatMap(item => item.rows)
       .reduce((map, row) => map.set(row.model, (map.get(row.model) ?? 0) + 1), new Map());
-    const modelItems = [...recurrentModels].map(([name, count]) => ({ name, count }));
+    const modelItems = [...recurrentModels].map(([name, count]) => ({ name, count, test: row => row.model === name }));
     const failures = group(rows.filter(row => /incidente|hardware|software|falha/i.test(`${row.type} ${row.service} ${row.category}`)), row => row.type);
     document.querySelector(viewTargets.quality).innerHTML = `${recurrenceInfo}<div class="wow-chart-grid">
       ${chartPanel("Acionamentos técnicos", "Chamados com mais de um acionamento registrado.", countBars(group(rows.filter(row => row.activations > 1), row => row.agent).sort((a, b) => b.count - a.count), 10))}
-      ${chartPanel("Chamados indevidos", "Identificados pelo serviço, tipo ou categoria que menciona indevido.", `<div class="wow-chart-list"><div class="wow-chart-row-head"><span class="wow-chart-name">Chamados indevidos</span><span class="wow-chart-value">${integer.format(inappropriate)}</span></div><p class="wow-chart-note">De ${integer.format(rows.length)} chamados filtrados · ${number.format(rows.length ? inappropriate / rows.length * 100 : 0)}%.</p></div>`)}
+      ${chartPanel("Chamados indevidos", "Identificados pelo serviço, tipo ou categoria que menciona indevido.", `<div class="wow-chart-list" ${chartFilters.attrs("Chamados indevidos", "Chamados indevidos", row => normalizedText(row.service).includes("indevid") || normalizedText(row.type).includes("chamado indevido") || normalizedText(row.category).includes("chamado indevido"))}><div class="wow-chart-row-head"><span class="wow-chart-name">Chamados indevidos</span><span class="wow-chart-value">${integer.format(inappropriate)}</span></div><p class="wow-chart-note">De ${integer.format(rows.length)} chamados filtrados · ${number.format(rows.length ? inappropriate / rows.length * 100 : 0)}%.</p></div>`)}
       ${chartPanel("Falhas por tipo", "Incidentes, hardware, software e falhas identificados nos campos de classificação.", countBars(failures, 10))}
       ${chartPanel("Reincidência potencial por modelo", "Modelos associados a números de série que aparecem em mais de um chamado.", countBars(modelItems, 10))}
     </div>`;
@@ -329,13 +331,13 @@
     const hoursByAgent = group(rows, row => row.agent, row => row.agentHours);
     const efficiency = byAgent.map(item => {
       const hours = hoursByAgent.find(candidate => candidate.name === item.name)?.sum ?? 0;
-      return { name: item.name, value: hours ? item.count / hours : 0, note: `${integer.format(item.count)} chamados · ${number.format(hours)} h registradas` };
+      return { ...item, value: hours ? item.count / hours : 0, note: `${integer.format(item.count)} chamados · ${number.format(hours)} h registradas` };
     });
     const supplierHours = group(rows, row => row.supplier, row => row.supplierHours)
-      .filter(item => item.sum > 0).map(item => ({ name: item.name, value: item.sum, note: `${integer.format(item.count)} chamados` }));
+      .filter(item => item.sum > 0).map(item => ({ ...item, value: item.sum, note: `${integer.format(item.count)} chamados` }));
     document.querySelector(viewTargets.team).innerHTML = `<div class="wow-chart-grid">
       ${chartPanel("Chamados por atendente", "Distribuição de chamados atribuídos à equipe.", countBars(byAgent, 12))}
-      ${chartPanel("Horas registradas por atendente", "Soma do tempo gasto pelo atendente.", bars(hoursByAgent.map(item => ({ name: item.name, value: item.sum, note: `${integer.format(item.count)} chamados` })), { format: "hours", maxRows: 12 }))}
+      ${chartPanel("Horas registradas por atendente", "Soma do tempo gasto pelo atendente.", bars(hoursByAgent.map(item => ({ ...item, value: item.sum, note: `${integer.format(item.count)} chamados` })), { format: "hours", maxRows: 12 }))}
       ${chartPanel("Chamados por hora registrada", "Indicador de volume dividido pelas horas informadas; não representa avaliação individual.", bars(efficiency, { format: "decimal", maxRows: 12 }))}
       ${chartPanel("Horas de fornecedores", "Tempo gasto pelo fornecedor conforme registrado na base.", bars(supplierHours, { format: "hours", maxRows: 10 }))}
     </div>`;
@@ -371,6 +373,7 @@
 
   function render() {
     if (!records.length) return;
+    chartFilters.begin();
     const rows = selectedRows();
     renderKpis(rows);
     renderExecutive(rows);
@@ -379,6 +382,7 @@
     renderQuality(rows);
     renderTeam(rows);
     renderAssets(rows);
+    chartFilters.finish();
   }
 
   function selectView(view) {
@@ -396,6 +400,7 @@
   function initialize() {
     for (const selector of Object.values(filters)) document.querySelector(selector).addEventListener("change", render);
     document.querySelector("#wowClearFilters").addEventListener("click", () => {
+      chartFilters.clear();
       for (const selector of Object.values(filters)) document.querySelector(selector).value = "all";
       render();
     });

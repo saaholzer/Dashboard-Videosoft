@@ -1,3 +1,4 @@
+import { createChartFilters } from "./chart-filters.js";
 (() => {
   const spreadsheetId = "1gFOAWUq7Uw-RW-61P7T0A9oaIjNCL0nAkdagfBTn4lE";
   const baseSheet = { sheet: "ECOKIOSK", gid: "1218615768" };
@@ -26,6 +27,7 @@
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   })[character]);
   const data = new Map();
+  const chartFilters = createChartFilters("#panel-ecokiosk", render);
   let activeView = "overview";
 
   function parseDate(value) {
@@ -118,7 +120,8 @@
   function selectedDates(rows, dateOf = row => row.scheduledDate) {
     const year = document.querySelector("#ecokioskYearFilter").value;
     const month = document.querySelector("#ecokioskMonthFilter").value;
-    return rows.filter(row => {
+    const domain = activeView === "overview" ? "base" : activeView === "rework" ? "rework" : "history";
+    return chartFilters.filter(rows, domain).filter(row => {
       const date = dateOf(row);
       if (!date) return year === "all" && month === "all";
       return (year === "all" || String(date.year) === year) &&
@@ -138,7 +141,7 @@
       const width = Math.min(100, Math.max(1.5, item.value / maximum * 100));
       const display = format === "count" ? integerFormat(item.value) : item.display;
       const note = item.note ? `<span class="wow-chart-note">${escapeHtml(item.note)}</span>` : "";
-      return `<div class="wow-chart-row" title="${escapeHtml(`${item.name}: ${display}`)}"><div class="wow-chart-row-head"><span class="wow-chart-name">${escapeHtml(item.name)}</span><span class="wow-chart-value">${escapeHtml(display)}</span></div><div class="wow-chart-track"><div class="wow-chart-fill" style="width:${width.toFixed(1)}%"></div></div>${note}</div>`;
+      return `<div class="wow-chart-row" ${chartFilters.attrs(title, item.name, item.test, item.domain ?? (activeView === "overview" ? "base" : activeView === "rework" ? "rework" : "history"))} title="${escapeHtml(`${item.name}: ${display}`)}"><div class="wow-chart-row-head"><span class="wow-chart-name">${escapeHtml(item.name)}</span><span class="wow-chart-value">${escapeHtml(display)}</span></div><div class="wow-chart-track"><div class="wow-chart-fill" style="width:${width.toFixed(1)}%"></div></div>${note}</div>`;
     }).join("");
     const listClass = `wow-chart-list${scrollable ? " wow-chart-list-scroll" : ""}`;
     return `<article class="panel"><div class="panel-head"><div><h2 class="panel-title">${escapeHtml(title)}</h2><p class="panel-subtitle">${escapeHtml(subtitle)}</p></div></div><div class="${listClass}">${rows}</div></article>`;
@@ -155,7 +158,7 @@
       group.records += 1;
       months.set(key, group);
     }
-    return [...months.values()].sort((a, b) => a.key.localeCompare(b.key));
+    return [...months.values()].sort((a, b) => a.key.localeCompare(b.key)).map(group => ({ ...group, test: row => { const date = dateOf(row); return date && `${date.year}-${String(date.month).padStart(2, "0")}` === group.key; } }));
   }
 
   function monthlyQuantity(rows, dateOf, quantityOf, recordLabel = "registros", singularRecordLabel = "registro") {
@@ -234,6 +237,11 @@
     }
     return groups.map(({ keys, ...group }) => ({
       ...group,
+      domain: activeView === "overview" ? "base" : "active",
+      test: row => {
+        const name = normalizedName(keyOf(row), type);
+        return keys.some(key => key === name || nameSimilarity(key, name) >= 0.92);
+      },
       note: `${integerFormat(group.records)} ${group.records === 1 ? "registro" : "registros"}`
     }));
   }
@@ -256,6 +264,7 @@
         const minutes = Math.round((average - hours) * 60);
         return {
           name: group.name,
+          test: row => { const date = row.finishDate ?? row.archivedDate; return date && `${date.year}-${String(date.month).padStart(2, "0")}` === group.key; },
           value: average,
           display: `${hours}h ${minutes}min`,
           note: `${integerFormat(group.records)} ${group.records === 1 ? "registro" : "registros"}`
@@ -267,7 +276,7 @@
     const groups = new Map();
     for (const row of rows) {
       const name = keyOf(row);
-      const group = groups.get(name) ?? { name, value: 0, productions: new Set() };
+      const group = groups.get(name) ?? { name, value: 0, productions: new Set(), test: row => keyOf(row) === name };
       group.value += 1;
       group.productions.add(row.id);
       groups.set(name, group);
@@ -323,7 +332,7 @@
     const completedQuantity = completed.reduce((sum, row) => sum + row.quantity, 0);
     const subtitle = `${integerFormat(completedQuantity)} unidades finalizadas · ${integerFormat(completed.length)} registros`;
     const processStatus = document.querySelector("#ecokioskProcessStatusFilter").value;
-    const activeRows = (data.get(`active:${definition.key}`) ?? []).filter(row =>
+    const activeRows = chartFilters.filter(data.get(`active:${definition.key}`) ?? [], "active").filter(row =>
       processStatus === "all" || activeProcessCategory(row) === processStatus
     );
     const activeQuantity = activeRows.reduce((sum, row) => sum + row.quantity, 0);
@@ -406,6 +415,7 @@
   }
 
   function render() {
+    chartFilters.begin();
     const year = document.querySelector("#ecokioskYearFilter").value;
     const month = document.querySelector("#ecokioskMonthFilter").value;
     const monthLabel = month === "all" ? "todos os meses" : fullMonthNames[Number(month)];
@@ -414,6 +424,7 @@
     document.querySelector("#ecokioskPeriodNote").textContent =
       `${integerFormat(selectedRecordCount)} registros nos históricos · ${monthLabel} · ${year === "all" ? "todos os anos" : year} selecionado`;
     renderActiveView();
+    chartFilters.finish();
     document.querySelector("#ecokioskDataNote").textContent =
       "A visão geral usa DATA PROGRAMADO. Nas abas dos setores, quantidades e operações finalizadas são agrupadas pela data ARQUIVADO EM; o tempo médio considera INÍCIO e FIM, usando ARQUIVADO EM como conclusão quando FIM não estiver disponível. Os filtros de setor acompanham ARQUIVADO EM. Em retrabalhos, o período usa a data/hora do evento.";
   }
@@ -421,6 +432,7 @@
   function selectView(view) {
     const tab = document.querySelector(`#ecokiosk-tab-${view}`);
     if (!tab) return;
+    if (activeView !== view) chartFilters.clear();
     activeView = view;
     for (const button of document.querySelectorAll(".ecokiosk-view-tab")) {
       const selected = button === tab;
@@ -436,7 +448,7 @@
       document.querySelector(`#ecokiosk-view-${definition.key}`).hidden = view !== definition.key;
     }
     document.querySelector("#ecokiosk-view-rework").hidden = !rework;
-    renderActiveView();
+    render();
   }
 
   function handleTabKeydown(event) {
@@ -531,6 +543,7 @@
   document.querySelector("#ecokioskStatusFilter").addEventListener("change", render);
   document.querySelector("#ecokioskProcessStatusFilter").addEventListener("change", render);
   document.querySelector("#ecokioskClearFilters").addEventListener("click", () => {
+    chartFilters.clear();
     for (const id of [
       "ecokioskYearFilter",
       "ecokioskMonthFilter",
