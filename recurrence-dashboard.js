@@ -108,7 +108,7 @@ function render() {
   const rows = periodFilterActive ? baseRows.filter(row => periodRows.has(row)) : baseRows;
   const referenceMonth = reference.year * 12 + reference.month;
   const futurePeriods = selectedPeriods.filter(period => period.year * 12 + period.month >= referenceMonth);
-  const highlightedPeriod = futurePeriods[0] ?? (periodFilterActive ? selectedPeriods[0] : undefined);
+  const monthlyBaseTotal = sumCents(rows);
   const projections = new Map(rows.map(row => [row, projectedValues(row, reference)]));
   const closingDate = monthEnd(reference.year, reference.month);
   const followingMonth = nextMonthForSelection(reference, {
@@ -127,7 +127,7 @@ function render() {
     ? `${integer.format(rows.length)} itens · ${integer.format(codedContracts)} contratos com código · ${billingPeriodLabel} · base: Valor Bruto`
     : 'Aguardando leitura da planilha.';
   byId('recurrenceKpis').innerHTML = [
-    kpi('Recorrência mês atual', highlightedPeriod?.value ?? 0, highlightedPeriod ? `Mensalidades de ${highlightedPeriod.name} previstas pela vigência dos contratos` : 'Mensalidades previstas pela vigência dos contratos'),
+    kpi('Recorrência mês atual', monthlyBaseTotal, 'Soma mensal do Valor Bruto da base filtrada, inclusive sem data de faturamento'),
     kpi('Saldo contratual projetado', remaining, `De ${MONTH_NAMES[reference.month]}/${reference.year} até o fim da vigência · meses integrais`),
     kpi('Valor total da Recorrência', lifetime, 'Valor mensal × meses entre início e fim da vigência'),
     kpi('Recorrência do mês seguinte', followingMonthTotal, `Mensalidade integral dos itens vigentes em ${MONTH_NAMES[followingMonth.month]}/${followingMonth.year}`)

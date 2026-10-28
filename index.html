@@ -492,6 +492,7 @@
       .dashboard-tab { padding: 8px 10px; font-size: 10px; }
       .filters { gap: 8px; }
     }
+    body[data-brand="wow"] #dashboardTitle { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   </style>
 </head>
 <body data-brand="videosoft">
@@ -504,7 +505,7 @@
       </div>
       <div class="masthead-row">
         <div>
-          <h1 id="dashboardTitle">2025 <span style="color:var(--brand-primary)">x</span> 2026</h1>
+          <h1 id="dashboardTitle">COMPARATIVO FINANCEIRO</h1>
           <p class="masthead-copy" id="dashboardCopy">Faturamento, locações e vendas em uma visão comparativa.</p>
         </div>
         <div class="masthead-actions">
@@ -557,7 +558,8 @@
       <div class="recurrence-contract-grid" id="recurrenceContractCharts"></div>
       <details class="recurrence-method">
         <summary>Como os valores são calculados</summary>
-        <p><strong>Recorrência mensal:</strong> cada mensalidade da coluna Valor Bruto é distribuída entre a coluna U (Previsão do Início de Vigência) e a coluna V (Previsão do Fim de Vigência). No filtro Faturamento, Histórico considera meses anteriores ao atual; Vigente considera o mês atual e os futuros, no fuso de São Paulo. Todos os períodos reúne as duas visões. A Data de Previsão Faturamento não determina essa distribuição.</p>
+        <p><strong>Recorrência mês atual:</strong> o indicador soma uma vez o Valor Bruto mensal de cada item da base filtrada, incluindo os registros sem data de faturamento. Sem filtros de período, representa a soma mensal de toda a base.</p>
+        <p><strong>Gráfico de recorrência mensal:</strong> cada mensalidade da coluna Valor Bruto é distribuída entre a coluna U (Previsão do Início de Vigência) e a coluna V (Previsão do Fim de Vigência). No filtro Faturamento, Histórico considera meses anteriores ao atual; Vigente considera o mês atual e os futuros, no fuso de São Paulo. Todos os períodos reúne as duas visões. A Data de Previsão Faturamento não determina essa distribuição.</p>
         <p><strong>Valor por ano:</strong> soma das mensalidades de cada ano, desde o primeiro ano do primeiro contrato. É uma estimativa contratual da base: a planilha não fornece um histórico de faturas efetivamente emitidas ou pagas.</p>
         <p><strong>Descrição e tipo:</strong> soma das mensalidades de cada categoria nos meses selecionados pelos filtros de Faturamento, ano e mês. Sem recorte de período, mostram a vigência completa.</p>
         <p><strong>Recorrência prevista a receber por ano:</strong> cada barra soma as mensalidades previstas para faturamento naquele ano, a partir do mês atual. Em outubro/2026, a barra de 2026 reúne outubro a dezembro; 2027 reúne os meses selecionados de janeiro a dezembro/2027, respeitando as vigências. O total de recorrência futura é a soma dessas barras. Trata-se de previsão contratual, sem comprovação de recebimento.</p>
@@ -2165,7 +2167,7 @@
       const dashboards = {
         compare: {
           eyebrow: "Painel executivo · desempenho comercial",
-          title: `2025 <span style="color:var(--brand-primary)">x</span> 2026`,
+          title: "COMPARATIVO FINANCEIRO",
           copy: "Faturamento, locações e vendas em uma visão comparativa.",
           source: "https://docs.google.com/spreadsheets/d/1-wphD_EW-7LswSWLU0Or7iqLzaGhhOQ/edit?gid=1301870631#gid=1301870631",
           sourceLabel: "Abrir planilha de origem ↗",
