@@ -58,6 +58,7 @@ export function createChartFilters(rootSelector, onChange, hostSelector = '.filt
         (action.domain && action.domain !== domain) || action.test(row)));
     },
     clear() { selected.clear(); },
+    selection(scope) { return selected.get(scope)?.label ?? null; },
     finish() {
       for (const element of root.querySelectorAll('[data-cross-filter]')) {
         if (element.dataset.crossOwner !== rootSelector) continue;

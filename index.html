@@ -456,6 +456,42 @@
     body[data-brand="wow"] .wow-callout { background: #EAF8EF; }
     body[data-brand="wow"] .wow-month-chart { grid-template-columns: none; grid-auto-columns: 46px; grid-auto-flow: column; overflow-x: auto; }
     body[data-brand="wow"] tbody tr:hover, body[data-brand="wow"] .wow-filter-actions:hover { background: #EAF8EF; }
+    /* Compact persistent controls leave the charts most of the viewport. */
+    .masthead { padding-top: 12px; padding-bottom: 12px; }
+    .masthead-inner { display: grid; grid-template-columns: 110px minmax(0, 1fr); align-items: center; gap: 22px; }
+    .masthead-brand { margin: 0; }
+    .brand-logo { width: 110px; }
+    .masthead-brand .eyebrow, .masthead-copy { display: none; }
+    .masthead-row { align-items: center; gap: 18px; }
+    .masthead h1 { font-size: 24px; }
+    .masthead-actions { gap: 14px; }
+    .refresh-button { min-height: 32px; font-size: 11px; }
+    .source-link { font-size: 12px; }
+    main { padding-top: 10px; }
+    .dashboard-tabs { margin-bottom: 10px; box-shadow: 0 -10px 0 var(--paper), 0 10px 0 var(--paper); }
+    .dashboard-tab { padding: 8px 13px; font-size: 11px; }
+    .dashboard-panel .filters { top: calc(var(--masthead-height, 62px) + var(--dashboard-tabs-height, 36px) + 10px); }
+    .filters { gap: 8px 14px; padding-bottom: 10px; }
+    .filter { gap: 4px; }
+    .filter label { font-size: 9px; letter-spacing: .6px; }
+    .filter select, .filter input, .production-filters input, #logisticsSearch, .wow-filter-actions { min-height: 34px; font-size: 12px; }
+    .period-note { font-size: 10px; }
+    .chart-filter-toolbar:not(:has(button)) { display: none; }
+    .chart-filter-toolbar > span { display: none; }
+    @media (max-width: 640px) {
+      .masthead { padding: 10px 18px 12px; }
+      .masthead-inner { display: block; position: relative; }
+      .masthead-brand { position: absolute; top: 0; left: 0; }
+      .brand-logo { width: 86px; }
+      .masthead-row { align-items: stretch; gap: 10px; }
+      .masthead-row > div:first-child { padding-left: 102px; min-height: 30px; display: flex; align-items: center; }
+      .masthead h1 { font-size: 19px; }
+      .masthead-actions { gap: 10px; }
+      .refresh-button { min-height: 34px; }
+      .masthead .source-link { font-size: 11px; }
+      .dashboard-tab { padding: 8px 10px; font-size: 10px; }
+      .filters { gap: 8px; }
+    }
   </style>
 </head>
 <body data-brand="videosoft">
@@ -482,12 +518,62 @@
   <main>
     <nav class="dashboard-tabs" role="tablist" aria-label="Painéis">
       <button class="dashboard-tab" id="tab-compare" type="button" role="tab" aria-selected="true" aria-controls="panel-compare">COMPARATIVO FINANCEIRO</button>
+      <button class="dashboard-tab" id="tab-recurrence" type="button" role="tab" aria-selected="false" aria-controls="panel-recurrence" tabindex="-1">RECORRÊNCIA</button>
       <button class="dashboard-tab" id="tab-wow" type="button" role="tab" aria-selected="false" aria-controls="panel-wow" tabindex="-1">WOW SERVICE</button>
       <button class="dashboard-tab" id="tab-production" type="button" role="tab" aria-selected="false" aria-controls="panel-production" tabindex="-1">PRODUÇÃO 2026</button>
       <button class="dashboard-tab" id="tab-logistics" type="button" role="tab" aria-selected="false" aria-controls="panel-logistics" tabindex="-1">LOGISTICA</button>
       <button class="dashboard-tab" id="tab-ifood" type="button" role="tab" aria-selected="false" aria-controls="panel-ifood" tabindex="-1">IFOOD</button>
       <button class="dashboard-tab" id="tab-ecokiosk" type="button" role="tab" aria-selected="false" aria-controls="panel-ecokiosk" tabindex="-1">ECOKIOSK</button>
     </nav>
+
+    <section class="dashboard-panel" id="panel-recurrence" role="tabpanel" aria-labelledby="tab-recurrence" hidden>
+      <section class="filters recurrence-filters" aria-label="Filtros de recorrência">
+        <div class="filter"><label for="recurrenceBillingPeriod">Faturamento</label><select id="recurrenceBillingPeriod"><option value="all">Todos os períodos</option><option value="historical">Faturamento Histórico</option><option value="current">Faturamento Vigente</option></select></div>
+        <div class="filter"><label for="recurrenceYear">Ano do faturamento</label><select id="recurrenceYear"><option value="all">Todos os anos</option></select></div>
+        <div class="filter"><label for="recurrenceMonth">Mês do faturamento</label><select id="recurrenceMonth"><option value="all">Todos os meses</option></select></div>
+        <div class="filter"><label for="recurrenceDescription">Descrição do faturamento</label><select id="recurrenceDescription"><option value="all">Todas as descrições</option></select></div>
+        <div class="filter"><label for="recurrenceType">Tipo de faturamento</label><select id="recurrenceType"><option value="all">Todos os tipos</option></select></div>
+        <div class="filter recurrence-range"><label for="recurrenceRangeButton">Buscar por período</label><button id="recurrenceRangeButton" class="recurrence-range-button" type="button" aria-haspopup="dialog" aria-controls="recurrenceRangeDialog">Selecionar 2 datas</button></div>
+        <button class="wow-filter-actions" id="recurrenceClearFilters" type="button">Limpar filtros</button>
+        <p class="period-note" id="recurrencePeriodNote" aria-live="polite">Carregando recorrência…</p>
+      </section>
+      <dialog class="recurrence-range-dialog" id="recurrenceRangeDialog" aria-labelledby="recurrenceRangeTitle" aria-describedby="recurrenceRangeHelp">
+        <form id="recurrenceRangeForm">
+          <h2 id="recurrenceRangeTitle">Buscar por período</h2>
+          <p id="recurrenceRangeHelp">Selecione as duas datas no calendário. Os meses inicial e final serão considerados integralmente.</p>
+          <div class="recurrence-range-dates">
+            <label>Data inicial<input id="recurrenceRangeStart" type="date" required autofocus></label>
+            <label>Data final<input id="recurrenceRangeEnd" type="date" required></label>
+          </div>
+          <p id="recurrenceRangeError" class="recurrence-range-error" role="status"></p>
+          <div class="recurrence-range-actions"><button id="recurrenceRangeClear" type="button">Limpar período</button><button id="recurrenceRangeCancel" type="button">Cancelar</button><button id="recurrenceRangeApply" type="submit" disabled>Aplicar período</button></div>
+        </form>
+      </dialog>
+      <section class="kpis" id="recurrenceKpis" aria-label="Indicadores de recorrência"></section>
+      <p class="recurrence-warning" id="recurrenceDataNote" hidden></p>
+      <div class="recurrence-grid" id="recurrenceCharts" aria-label="Recorrência por previsão, descrição e tipo"></div>
+      <h2 class="recurrence-contract-heading">Três visões dos contratos</h2>
+      <p class="recurrence-contract-caption">Projeções sobre a base selecionada, usando automaticamente a data atual para o saldo e o ano dos fechamentos mensais.</p>
+      <div class="recurrence-contract-grid" id="recurrenceContractCharts"></div>
+      <details class="recurrence-method">
+        <summary>Como os valores são calculados</summary>
+        <p><strong>Recorrência mensal:</strong> cada mensalidade da coluna Valor Bruto é distribuída entre a coluna U (Previsão do Início de Vigência) e a coluna V (Previsão do Fim de Vigência). No filtro Faturamento, Histórico considera meses anteriores ao atual; Vigente considera o mês atual e os futuros, no fuso de São Paulo. Todos os períodos reúne as duas visões. A Data de Previsão Faturamento não determina essa distribuição.</p>
+        <p><strong>Valor por ano:</strong> soma das mensalidades de cada ano, desde o primeiro ano do primeiro contrato. É uma estimativa contratual da base: a planilha não fornece um histórico de faturas efetivamente emitidas ou pagas.</p>
+        <p><strong>Descrição e tipo:</strong> soma das mensalidades de cada categoria nos meses selecionados pelos filtros de Faturamento, ano e mês. Sem recorte de período, mostram a vigência completa.</p>
+        <p><strong>Recorrência prevista a receber por ano:</strong> cada barra soma as mensalidades previstas para faturamento naquele ano, a partir do mês atual. Em outubro/2026, a barra de 2026 reúne outubro a dezembro; 2027 reúne os meses selecionados de janeiro a dezembro/2027, respeitando as vigências. O total de recorrência futura é a soma dessas barras. Trata-se de previsão contratual, sem comprovação de recebimento.</p>
+        <p><strong>Saldo projetado:</strong> soma das mensalidades integrais desde o mês atual (ou o mês de início da vigência, se posterior) até o mês de término, inclusive. Contratos encerrados em qualquer dia do mês atual ainda contam uma mensalidade integral neste mês; só são excluídos os encerrados em meses anteriores. O mês atual considera o fuso de São Paulo.</p>
+        <p><strong>Vigência completa:</strong> valor mensal multiplicado pelo número de meses civis entre o início e o fim da vigência, incluindo uma mensalidade integral tanto no mês de início quanto no mês de encerramento. Mesmo que o contrato termine no primeiro dia do mês, esse mês é incluído. Sem reajustes, descontos futuros, rateio diário ou abatimento de pagamentos.</p>
+        <p><strong>Buscar por período:</strong> exige uma data inicial e uma final. O intervalo inclui integralmente os meses das duas datas e atua junto aos demais filtros. Cancelar a seleção mantém o intervalo anterior; Limpar período remove somente esse intervalo.</p>
+        <p><strong>Recorrência do mês seguinte:</strong> considera o mês seguinte ao selecionado no filtro ou no gráfico mensal. Se apenas um intervalo de datas estiver selecionado, considera o mês seguinte à data final. Sem seleção de período, usa o mês atual. O ano selecionado é respeitado; sem ano selecionado, usa o ano atual. Inclui também contratos que começam no mês seguinte, respeitando os filtros de descrição e tipo. As mensalidades são integrais, independentemente do dia de início ou término.</p>
+        <p>Linhas de totalização não são somadas. Itens sem código de contrato permanecem na base; cada linha identificada é considerada um item. Vigências ausentes ou com término anterior ao início ficam fora das três projeções, mantendo seu valor nos gráficos de faturamento.</p>
+      </details>
+      <article class="panel detail-panel">
+        <div class="panel-head"><div><h2 class="panel-title">Consulta de contratos e faturas</h2><p class="panel-subtitle" id="recurrenceTableCount">Aguardando dados.</p></div></div>
+        <div class="recurrence-table-wrap" id="recurrenceTable"></div>
+        <div class="recurrence-pagination"><button id="recurrencePrevious" type="button">Anterior</button><span id="recurrencePage" aria-live="polite"></span><button id="recurrenceNext" type="button">Próxima</button></div>
+      </article>
+      <footer><span id="recurrenceDataStatus" role="status">Aguardando leitura da planilha.</span><span>Base: Valor Bruto · Calendário: vigência contratual · Valores estimados</span></footer>
+    </section>
 
     <section class="dashboard-panel" id="panel-compare" role="tabpanel" aria-labelledby="tab-compare">
     <section class="filters" aria-label="Filtros do painel">
@@ -822,6 +908,7 @@
   <script type="module" src="./wow-dashboard.js"></script>
   <script type="module" src="./ifood-dashboard.js"></script>
   <script type="module" src="./ecokiosk-dashboard.js"></script>
+  <script type="module" src="./recurrence-dashboard.js"></script>
   <script type="module">
     import { createChartFilters } from "./chart-filters.js";
     const productionCharts = createChartFilters("#panel-production", renderProduction);
@@ -2084,6 +2171,14 @@
           sourceLabel: "Abrir planilha de origem ↗",
           pageTitle: "COMPARATIVO FINANCEIRO"
         },
+        recurrence: {
+          eyebrow: "Receita recorrente · contratos e faturamento",
+          title: "RECORRÊNCIA",
+          copy: "Valores mensais, previsões de faturamento e três visões da vigência dos contratos.",
+          source: "https://docs.google.com/spreadsheets/d/1fO7K5k5ak32kc1SDg6DAuoqAw3DmYUeD/edit?gid=868588654#gid=868588654",
+          sourceLabel: "Abrir planilha de recorrência ↗",
+          pageTitle: "RECORRÊNCIA"
+        },
         wow: {
           eyebrow: "Análise da operação · suporte técnico",
           title: "Wow Service",
@@ -2157,6 +2252,7 @@
       try {
         const refresh = {
           compare: refreshFromSheet,
+          recurrence: () => window.refreshRecurrenceDashboard(),
           wow: refreshWowFromSheet,
           production: refreshProductionFromSheet,
           logistics: refreshLogisticsFromSheet,
@@ -2238,6 +2334,7 @@
     document.querySelector("#productionOrderSearch").addEventListener("input", renderProduction);
     document.querySelector("#refreshButton").addEventListener("click", refreshActiveDashboard);
     document.querySelector("#tab-compare").addEventListener("click", () => switchDashboard("compare"));
+    document.querySelector("#tab-recurrence").addEventListener("click", () => switchDashboard("recurrence"));
     document.querySelector("#tab-wow").addEventListener("click", () => switchDashboard("wow"));
     document.querySelector("#tab-production").addEventListener("click", () => switchDashboard("production"));
     document.querySelector("#tab-logistics").addEventListener("click", () => switchDashboard("logistics"));
@@ -2246,7 +2343,7 @@
     document.querySelector(".dashboard-tabs").addEventListener("keydown", event => {
       if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
       event.preventDefault();
-      const dashboards = ["compare", "wow", "production", "logistics", "ifood", "ecokiosk"];
+      const dashboards = ["compare", "recurrence", "wow", "production", "logistics", "ifood", "ecokiosk"];
       const currentIndex = dashboards.indexOf(activeDashboard);
       const nextIndex = event.key === "Home" ? 0
         : event.key === "End" ? dashboards.length - 1
