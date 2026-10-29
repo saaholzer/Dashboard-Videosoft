@@ -533,7 +533,7 @@
         <div class="filter"><label for="recurrenceYear">Ano do faturamento</label><select id="recurrenceYear"><option value="all">Todos os anos</option></select></div>
         <div class="filter"><label for="recurrenceMonth">Mês do faturamento</label><select id="recurrenceMonth"><option value="all">Todos os meses</option></select></div>
         <div class="filter"><label for="recurrenceDescription">Descrição do faturamento</label><select id="recurrenceDescription"><option value="all">Todas as descrições</option></select></div>
-        <div class="filter"><label for="recurrenceType">Tipo de faturamento</label><select id="recurrenceType"><option value="all">Todos os tipos</option></select></div>
+        <div class="filter"><label for="recurrenceType">Tipo de contrato</label><select id="recurrenceType"><option value="all">Todos os tipos</option></select></div>
         <div class="filter recurrence-range"><label for="recurrenceRangeButton">Buscar por período</label><button id="recurrenceRangeButton" class="recurrence-range-button" type="button" aria-haspopup="dialog" aria-controls="recurrenceRangeDialog">Selecionar 2 datas</button></div>
         <button class="wow-filter-actions" id="recurrenceClearFilters" type="button">Limpar filtros</button>
         <p class="period-note" id="recurrencePeriodNote" aria-live="polite">Carregando recorrência…</p>
@@ -558,15 +558,16 @@
       <div class="recurrence-contract-grid" id="recurrenceContractCharts"></div>
       <details class="recurrence-method">
         <summary>Como os valores são calculados</summary>
-        <p><strong>Recorrência mês atual:</strong> o indicador soma uma vez o Valor Bruto mensal de cada item da base filtrada, incluindo os registros sem data de faturamento. Sem filtros de período, representa a soma mensal de toda a base.</p>
-        <p><strong>Gráfico de recorrência mensal:</strong> cada mensalidade da coluna Valor Bruto é distribuída entre a coluna U (Previsão do Início de Vigência) e a coluna V (Previsão do Fim de Vigência). No filtro Faturamento, Histórico considera meses anteriores ao atual; Vigente considera o mês atual e os futuros, no fuso de São Paulo. Todos os períodos reúne as duas visões. A Data de Previsão Faturamento não determina essa distribuição.</p>
+        <p><strong>Regra das projeções:</strong> registros com ou sem data de faturamento entram nos gráficos e projeções quando a vigência nas colunas Z e AA é válida. Uma mensalidade integral é atribuída a cada mês entre o início e o término, inclusive. A ausência de data de faturamento não exclui o registro. Vigências inválidas ficam fora das projeções. Os cartões de recorrência mensal usam a soma da base filtrada descrita abaixo.</p>
+        <p><strong>Recorrência mês atual:</strong> soma uma vez o Valor Bruto mensal de cada item da base filtrada, incluindo os registros sem data de faturamento. Sem filtros de período, representa a soma mensal de toda a base. As projeções e os demais gráficos distribuem as mensalidades conforme a vigência Z–AA.</p>
+        <p><strong>Gráfico de recorrência mensal:</strong> cada mensalidade da coluna Valor Bruto é distribuída entre a coluna Z (Previsão do Início de Vigência) e a coluna AA (Previsão do Fim de Vigência). No filtro Faturamento, Histórico considera meses anteriores ao atual; Vigente considera o mês atual e os futuros, no fuso de São Paulo. Todos os períodos reúne as duas visões. A Data de Previsão Faturamento não determina essa distribuição.</p>
         <p><strong>Valor por ano:</strong> soma das mensalidades de cada ano, desde o primeiro ano do primeiro contrato. É uma estimativa contratual da base: a planilha não fornece um histórico de faturas efetivamente emitidas ou pagas.</p>
         <p><strong>Descrição e tipo:</strong> soma das mensalidades de cada categoria nos meses selecionados pelos filtros de Faturamento, ano e mês. Sem recorte de período, mostram a vigência completa.</p>
         <p><strong>Recorrência prevista a receber por ano:</strong> cada barra soma as mensalidades previstas para faturamento naquele ano, a partir do mês atual. Em outubro/2026, a barra de 2026 reúne outubro a dezembro; 2027 reúne os meses selecionados de janeiro a dezembro/2027, respeitando as vigências. O total de recorrência futura é a soma dessas barras. Trata-se de previsão contratual, sem comprovação de recebimento.</p>
         <p><strong>Saldo projetado:</strong> soma das mensalidades integrais desde o mês atual (ou o mês de início da vigência, se posterior) até o mês de término, inclusive. Contratos encerrados em qualquer dia do mês atual ainda contam uma mensalidade integral neste mês; só são excluídos os encerrados em meses anteriores. O mês atual considera o fuso de São Paulo.</p>
         <p><strong>Vigência completa:</strong> valor mensal multiplicado pelo número de meses civis entre o início e o fim da vigência, incluindo uma mensalidade integral tanto no mês de início quanto no mês de encerramento. Mesmo que o contrato termine no primeiro dia do mês, esse mês é incluído. Sem reajustes, descontos futuros, rateio diário ou abatimento de pagamentos.</p>
         <p><strong>Buscar por período:</strong> exige uma data inicial e uma final. O intervalo inclui integralmente os meses das duas datas e atua junto aos demais filtros. Cancelar a seleção mantém o intervalo anterior; Limpar período remove somente esse intervalo.</p>
-        <p><strong>Recorrência do mês seguinte:</strong> considera o mês seguinte ao selecionado no filtro ou no gráfico mensal. Se apenas um intervalo de datas estiver selecionado, considera o mês seguinte à data final. Sem seleção de período, usa o mês atual. O ano selecionado é respeitado; sem ano selecionado, usa o ano atual. Inclui também contratos que começam no mês seguinte, respeitando os filtros de descrição e tipo. As mensalidades são integrais, independentemente do dia de início ou término.</p>
+        <p><strong>Recorrência do mês seguinte:</strong> soma o Valor Bruto mensal dos contratos cuja vigência Z–AA abrange o mês indicado, inclusive registros sem data de faturamento. Exclui contratos encerrados antes desse mês e contratos que só começam depois dele. O mês de encerramento conta integralmente. O mês indicado é o seguinte ao selecionado no filtro ou gráfico; quando há somente um intervalo de datas, é o seguinte à data final. Sem seleção, usa o próximo mês do calendário atual.</p>
         <p>Linhas de totalização não são somadas. Itens sem código de contrato permanecem na base; cada linha identificada é considerada um item. Vigências ausentes ou com término anterior ao início ficam fora das três projeções, mantendo seu valor nos gráficos de faturamento.</p>
       </details>
       <article class="panel detail-panel">
@@ -2177,7 +2178,7 @@
           eyebrow: "Receita recorrente · contratos e faturamento",
           title: "RECORRÊNCIA",
           copy: "Valores mensais, previsões de faturamento e três visões da vigência dos contratos.",
-          source: "https://docs.google.com/spreadsheets/d/1fO7K5k5ak32kc1SDg6DAuoqAw3DmYUeD/edit?gid=868588654#gid=868588654",
+          source: "https://docs.google.com/spreadsheets/d/1fO7K5k5ak32kc1SDg6DAuoqAw3DmYUeD/edit?gid=311713611#gid=311713611",
           sourceLabel: "Abrir planilha de recorrência ↗",
           pageTitle: "RECORRÊNCIA"
         },

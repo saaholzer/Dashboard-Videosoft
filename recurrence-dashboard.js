@@ -1,6 +1,6 @@
 import { createChartFilters } from './chart-filters.js';
 import {
-  RECURRENCE_DATA_URL, MONTH_NAMES, parseRecurrenceData, parseReferenceDate, todayInSaoPaulo,
+  RECURRENCE_DATA_URL, MONTH_NAMES, parseRecurrenceRows, parseReferenceDate, todayInSaoPaulo,
   validTerm, projectedValues, monthEnd, activeInMonth, sumCents, groupRecurrence, contractBillingPeriods, matchesBillingPeriod, nextMonthForSelection, growthRate, endingContractsByMonth, matchesDateRange
 } from './recurrence-data.js';
 import './recurrence-dashboard.css';
@@ -109,6 +109,7 @@ function render() {
   const referenceMonth = reference.year * 12 + reference.month;
   const futurePeriods = selectedPeriods.filter(period => period.year * 12 + period.month >= referenceMonth);
   const monthlyBaseTotal = sumCents(rows);
+  const registeredMonthlyTotal = sumCents(baseRows);
   const projections = new Map(rows.map(row => [row, projectedValues(row, reference)]));
   const closingDate = monthEnd(reference.year, reference.month);
   const followingMonth = nextMonthForSelection(reference, {
@@ -116,7 +117,7 @@ function render() {
     month: selectedMonth,
     period: allPeriods.find(period => period.name === chartMonth) ?? (selectedMonth === 'all' ? rangeEnd : null)
   });
-  // Evaluate next month's base, including contracts that start after the selected month.
+  // Include undated invoices, but only when the contract covers the target month.
   const followingMonthTotal = sumCents(baseRows.filter(row => activeInMonth(row, followingMonth)));
   const validRows = rows.filter(validTerm);
   const remaining = sumCents(rows, row => projections.get(row).remainingCents);
@@ -124,13 +125,13 @@ function render() {
   const closing = sumCents(rows.filter(row => activeInMonth(row, closingDate)));
   const codedContracts = new Set(rows.map(row => row.contract).filter(Boolean)).size;
   byId('recurrencePeriodNote').textContent = loaded
-    ? `${integer.format(rows.length)} itens · ${integer.format(codedContracts)} contratos com código · ${billingPeriodLabel} · base: Valor Bruto`
+    ? `${integer.format(rows.length)} itens · ${integer.format(codedContracts)} contratos com código · ${billingPeriodLabel} · Valor mensal cadastrado: ${formatMoney(registeredMonthlyTotal)}`
     : 'Aguardando leitura da planilha.';
   byId('recurrenceKpis').innerHTML = [
     kpi('Recorrência mês atual', monthlyBaseTotal, 'Soma mensal do Valor Bruto da base filtrada, inclusive sem data de faturamento'),
     kpi('Saldo contratual projetado', remaining, `De ${MONTH_NAMES[reference.month]}/${reference.year} até o fim da vigência · meses integrais`),
     kpi('Valor total da Recorrência', lifetime, 'Valor mensal × meses entre início e fim da vigência'),
-    kpi('Recorrência do mês seguinte', followingMonthTotal, `Mensalidade integral dos itens vigentes em ${MONTH_NAMES[followingMonth.month]}/${followingMonth.year}`)
+    kpi('Recorrência do mês seguinte', followingMonthTotal, `Mensalidades vigentes em ${MONTH_NAMES[followingMonth.month]}/${followingMonth.year}, inclusive sem data de faturamento`)
   ].join('');
 
   const periodByKey = new Map(allPeriods.map(period => [period.key, period]));
@@ -164,11 +165,11 @@ function render() {
     ...group, note: `${formatMoney(group.monthlyCents)}/mês de recorrência`
   }));
   byId('recurrenceCharts').innerHTML = [
-    chartPanel('Recorrência por mês e ano', `${billingPeriodLabel}: mensalidades entre o início (U) e o fim (V). Crescimento em relação ao mês anterior.`, monthly, 'Mês a faturar', { chronological: true, domain: 'period' }),
-    chartPanel('Valor por ano', 'Mensalidades de cada ano pela vigência (U e V). Crescimento vs ano anterior, comparando os mesmos meses selecionados.', annual, 'Ano de faturamento', { chronological: true, domain: 'period' }),
+    chartPanel('Recorrência por mês e ano', `${billingPeriodLabel}: mensalidades entre o início (Z) e o fim (AA). Crescimento em relação ao mês anterior.`, monthly, 'Mês a faturar', { chronological: true, domain: 'period' }),
+    chartPanel('Valor por ano', 'Mensalidades de cada ano pela vigência (Z e AA). Crescimento vs ano anterior, comparando os mesmos meses selecionados.', annual, 'Ano de faturamento', { chronological: true, domain: 'period' }),
     chartPanel('Valor por descrição do faturamento', 'Soma das mensalidades por descrição no período selecionado. Todos os períodos: vigência completa.', groupRecurrence(validRows, row => row.description, selectedPeriodValue), 'Descrição do faturamento'),
-    `<div class="recurrence-type-column">${chartPanel('Valor por tipo de faturamento', 'Soma das mensalidades por tipo no período selecionado. Todos os períodos: vigência completa.', groupRecurrence(validRows, row => row.billingType, selectedPeriodValue), 'Tipo de faturamento')}
-      <div class="recurrence-ending-chart">${chartPanel('Encerramentos de contratos por mês', 'Contratos por mês de término (V) e seu valor mensal bruto correspondente. Códigos únicos; itens sem código não são contados.', endings, 'Mês de encerramento', { chronological: true, format: 'count', totalLabel: `Recorrência mensal correspondente: ${formatMoney(sumCents(endings, group => group.monthlyCents))}/mês` })}</div></div>`
+    `<div class="recurrence-type-column">${chartPanel('Valor por tipo de contrato', 'Soma das mensalidades por tipo no período selecionado. Todos os períodos: vigência completa.', groupRecurrence(validRows, row => row.billingType, selectedPeriodValue), 'Tipo de contrato')}
+      <div class="recurrence-ending-chart">${chartPanel('Encerramentos de contratos por mês', 'Contratos por mês de término (AA) e seu valor mensal bruto correspondente. Códigos únicos; itens sem código não são contados.', endings, 'Mês de encerramento', { chronological: true, format: 'count', totalLabel: `Recorrência mensal correspondente: ${formatMoney(sumCents(endings, group => group.monthlyCents))}/mês` })}</div></div>`
   ].join('');
 
   const accumulatedByYear = groupRecurrence(selectedPeriods, period => period.year, period => period.value).map(group => ({
@@ -234,7 +235,10 @@ async function loadData() {
   try {
     const response = await fetch(RECURRENCE_DATA_URL, { cache: 'no-store', signal: controller.signal });
     if (!response.ok) throw new Error(`A planilha respondeu com ${response.status}.`);
-    const parsed = parseRecurrenceData(await response.text());
+    if (!window.Papa) throw new Error('O leitor CSV não está disponível. Atualize a página e tente novamente.');
+    const csv = window.Papa.parse(await response.text(), { header: true, skipEmptyLines: 'greedy' });
+    if (csv.errors.length) throw new Error(`Não foi possível ler o CSV: ${csv.errors[0].message}`);
+    const parsed = parseRecurrenceRows(csv.data);
     records = parsed.records;
     sourceInfo = parsed;
     loaded = true;

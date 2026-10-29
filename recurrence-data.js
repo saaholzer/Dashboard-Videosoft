@@ -1,5 +1,5 @@
-export const RECURRENCE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1fO7K5k5ak32kc1SDg6DAuoqAw3DmYUeD/edit?gid=868588654#gid=868588654';
-export const RECURRENCE_DATA_URL = 'https://docs.google.com/spreadsheets/d/1fO7K5k5ak32kc1SDg6DAuoqAw3DmYUeD/gviz/tq?gid=868588654&tqx=out:json';
+export const RECURRENCE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1fO7K5k5ak32kc1SDg6DAuoqAw3DmYUeD/edit?gid=311713611#gid=311713611';
+export const RECURRENCE_DATA_URL = 'https://docs.google.com/spreadsheets/d/1fO7K5k5ak32kc1SDg6DAuoqAw3DmYUeD/export?format=csv&gid=311713611';
 export const MONTH_NAMES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
 export function calendarDate(year, month, day) {
@@ -20,6 +20,44 @@ export function parseReferenceDate(value) {
   return match ? calendarDate(Number(match[1]), Number(match[2]) - 1, Number(match[3])) : null;
 }
 
+export function parseDisplayDate(value, order = 'dmy') {
+  const typed = parseSheetDate(value);
+  if (typed) return typed;
+  const iso = parseReferenceDate(value);
+  if (iso) return iso;
+  const match = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(String(value ?? '').trim());
+  if (!match) return null;
+  const first = Number(match[1]), second = Number(match[2]), year = Number(match[3]);
+  const american = second > 12 || (first <= 12 && order === 'mdy');
+  return calendarDate(year, (american ? first : second) - 1, american ? second : first);
+}
+
+export function parseRecurrenceRows(sourceRows) {
+  if (!sourceRows.length) throw new Error('A planilha não retornou registros.');
+  const columns = Object.keys(sourceRows[0]).map(label => label.trim());
+  if (!columns.includes('Tipo Faturamento') && columns.includes('Tipo Contrato')) columns.push('Tipo Faturamento');
+  const dateColumns = new Set(['Data de Previsão Faturamento', 'Previsão do Início de Vigência', 'Previsão do Fim de Vigência']);
+  const rows = sourceRows.map(source => {
+    const values = Object.fromEntries(Object.entries(source).map(([key, value]) => [key.trim(), value]));
+    values['Tipo Faturamento'] ??= values['Tipo Contrato'];
+    return { c: columns.map(column => {
+      let value = values[column] ?? null;
+      if (column === 'Valor Bruto' && typeof value !== 'number') {
+        const text = String(value ?? '').replace(/[^\d,.-]/g, '');
+        value = text ? Number(text.includes(',') ? text.replace(/\./g, '').replace(',', '.') : text) : null;
+      } else if (dateColumns.has(column)) {
+        // Validity dates use Brazilian order; explicitly American dates (e.g. 4/21)
+        // are also accepted. Preserve mixed CSV cells instead of GViz's null coercion.
+        const forecastOrder = column === 'Data de Previsão Faturamento' && !/^\d{2}\/\d{2}\//.test(String(value)) ? 'mdy' : 'dmy';
+        const date = parseDisplayDate(value, forecastOrder);
+        value = date ? `Date(${date.year},${date.month},${date.day})` : null;
+      }
+      return { v: value };
+    }) };
+  });
+  return normalizeRecurrenceTable({ cols: columns.map(label => ({ label })), rows });
+}
+
 export function todayInSaoPaulo() {
   const parts = Object.fromEntries(new Intl.DateTimeFormat('en', {
     timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit'
@@ -36,7 +74,11 @@ export function parseRecurrenceData(text) {
   if (result.status !== 'ok' || !result.table?.cols || !result.table?.rows) {
     throw new Error(result.errors?.[0]?.detailed_message || 'Não foi possível ler os dados da recorrência.');
   }
-  const columns = result.table.cols.map(column => column.label.trim());
+  return normalizeRecurrenceTable(result.table);
+}
+
+function normalizeRecurrenceTable(table) {
+  const columns = table.cols.map(column => column.label.trim());
   for (const name of ['Número da Fatura', 'Descrição do Faturamento', 'Tipo Faturamento', 'Valor Bruto',
     'Data de Previsão Faturamento', 'Previsão do Início de Vigência', 'Previsão do Fim de Vigência']) {
     if (!columns.includes(name)) throw new Error(`Coluna obrigatória não encontrada: ${name}.`);
@@ -44,7 +86,7 @@ export function parseRecurrenceData(text) {
   const records = [];
   let ignoredRows = 0;
   let invalidAmounts = 0;
-  for (const [index, source] of result.table.rows.entries()) {
+  for (const [index, source] of table.rows.entries()) {
     const cells = Object.fromEntries(columns.map((name, position) => [name, source.c[position]?.v ?? null]));
     const textOf = name => String(cells[name] ?? '').trim();
     const invoice = textOf('Número da Fatura');

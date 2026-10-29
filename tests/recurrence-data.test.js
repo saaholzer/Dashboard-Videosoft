@@ -1,9 +1,32 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { calendarDate, parseReferenceDate, parseSheetDate, parseRecurrenceData, contractMonths, projectedValues, activeInMonth, monthEnd, groupRecurrence, sumCents, contractBillingPeriods, matchesBillingPeriod, nextCalendarMonth, nextMonthForSelection, growthRate, endingContractsByMonth, matchesDateRange } from '../recurrence-data.js';
+import { calendarDate, parseReferenceDate, parseSheetDate, parseRecurrenceData, contractMonths, projectedValues, activeInMonth, monthEnd, groupRecurrence, sumCents, contractBillingPeriods, matchesBillingPeriod, nextCalendarMonth, nextMonthForSelection, growthRate, endingContractsByMonth, matchesDateRange, parseRecurrenceRows, parseDisplayDate } from '../recurrence-data.js';
 
 const date = value => parseReferenceDate(value);
 const item = (start, end, amountCents = 10000) => ({ start: date(start), end: date(end), amountCents });
+
+test('new dashboard CSV preserves mixed dates, contract types and records without final validity', () => {
+  const base = {
+    'Número da Fatura ': '101', 'Descrição do Faturamento ': 'LOC', 'Tipo Contrato': 'Locação 36 meses + GO',
+    'Valor Bruto ': 'R$ 1.234,56', 'Data de Previsão Faturamento ': '',
+    'Previsão do Início de Vigência': '15/05/2025', 'Previsão do Fim de Vigência': '15/05/2028'
+  };
+  const parsed = parseRecurrenceRows([
+    base,
+    { ...base, 'Número da Fatura ': '102', 'Valor Bruto ': 'R$ 200,00', 'Previsão do Início de Vigência': '4/21/2026', 'Previsão do Fim de Vigência': '4/21/2029' },
+    { ...base, 'Número da Fatura ': '103', 'Previsão do Fim de Vigência': '' }
+  ]);
+  assert.equal(parsed.records.length, 3);
+  assert.equal(parsed.records[0].amountCents, 123456);
+  assert.equal(parsed.records[0].billingType, 'Locação 36 meses + GO');
+  assert.equal(parsed.records[0].start.month, 4);
+  assert.equal(parsed.records[1].start.month, 3);
+  assert.equal(parsed.records[1].start.day, 21);
+  assert.equal(parsed.records[2].end, null);
+  assert.equal(parsed.records[2].amountCents, 123456);
+  assert.equal(parseDisplayDate('2/3/2026').month, 2);
+  assert.equal(parseDisplayDate('#N/A'), null);
+});
 
 test('date range requires two ordered dates and includes complete boundary months', () => {
   const start = date('2026-10-28'), end = date('2027-01-02');
@@ -166,4 +189,22 @@ test('exclude spreadsheet totals, retain identified invoices without a contract 
   assert.equal(parsed.records[1].contract, '');
   assert.equal(parsed.records[1].billingType, 'Não informado');
   assert.equal(parsed.records[0].forecast.month, 8);
+  const periods = contractBillingPeriods(parsed.records);
+  assert.equal(periods.length, 12);
+  assert(periods.every(period => period.value === 30));
+  assert.equal(sumCents(periods, period => period.value), 360);
+});
+
+test('undated billing records use validity for monthly and annual projections', () => {
+  const rows = [
+    { ...item('2026-10-15', '2027-01-02', 15000), forecast: null },
+    { ...item('2025-01-01', '2025-02-28', 9000), forecast: null }
+  ];
+  const periods = contractBillingPeriods(rows);
+  assert.equal(periods.find(period => period.key === '2026-10').value, 15000);
+  assert.equal(periods.find(period => period.key === '2027-01').value, 15000);
+  assert(!periods.some(period => period.key === '2027-02'));
+  assert.equal(sumCents(periods, period => period.value), 78000);
+  const future = periods.filter(period => matchesBillingPeriod(period, date('2026-10-28'), 'current'));
+  assert.equal(sumCents(future, period => period.value), 60000);
 });
